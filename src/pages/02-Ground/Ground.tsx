@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import decrypt from "../../common/helper";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
-import { Button } from "primereact/button";
+// import { Button } from "primereact/button";
 import { Sidebar } from "primereact/sidebar";
 import GroundSidebar from "../../components/ground sidebar/GroundSidebar";
 import { Trash2 } from "lucide-react";
@@ -120,7 +120,7 @@ const Ground: React.FC = () => {
         style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1rem" }}
       >
         <h1 className="font-bold text-3xl text-black mt-4">Grounds</h1>
-        <Button label="Add New Ground" onClick={() => setVisibleRight(true)} />
+        {/* <Button label="Add New Ground" onClick={() => setVisibleRight(true)} /> */}
       </div>
 
       <DataTable

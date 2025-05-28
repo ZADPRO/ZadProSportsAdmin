@@ -642,7 +642,7 @@ const customMap = async (event: any) => {
 
               return (
                 <Panel key={addonIndex} header={addon.refAddOnName} toggleable>
-                  <p className="m-0 mb-2">Add-on ID: {addon.refAddonId}</p>
+                  {/* <p className="m-0 mb-2">Add-on ID: {addon.refAddonId}</p> */}
 
                   <div className="flex gap-2 justify-between">
                     <Calendar
@@ -654,7 +654,7 @@ const customMap = async (event: any) => {
                         )
                       }
                       selectionMode="multiple"
-                      placeholder="Enter Your Unavalable Dates"
+                      placeholder="Enter Your Unavailable Dates"
                       readOnlyInput
                       className="mb-2 w-full"
                     />
