@@ -77,18 +77,19 @@ const Booking: React.FC = () => {
     ListUserBookingApi();
   }, []);
   return (
-    <div>
+    <div className=" ml-3 mr-3">
       {/* <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '1rem' }}>
      <Button label="Add New Groud" onClick={() => setVisibleRight(true)} />
 </div> */}
-      <div className=" ml-3 mr-3">
+<h1 className="font-bold text-3xl text-black mt-4">Booking History</h1>
+      <div>
         <DataTable
           scrollable
           showGridlines
           stripedRows
           value={getListUserApi}
           // tableStyle={{ margin: "10px" ,marginTop:"5rem"}}
-          tableStyle={{ marginTop: "5rem", padding: "2px", justifyContent:"center"}}
+          tableStyle={{ marginTop: "2.5rem", padding: "1px", justifyContent:"center"}}
         >
           <Column
             field="sno"
@@ -118,7 +119,7 @@ const Booking: React.FC = () => {
           <Column
             field="refMobileNumber"
             header="User Mobile Number"
-            style={{ minWidth: "10rem" }}
+            style={{ minWidth: "12rem" }}
           ></Column>
           <Column
             field="refGroundCustId"

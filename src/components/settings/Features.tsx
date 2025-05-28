@@ -6,7 +6,7 @@ import { Button } from "primereact/button";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Toast } from "primereact/toast";
-import { Pencil, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 interface FeaturesResult {
   refFeaturesId: number;
@@ -124,10 +124,10 @@ const Features: React.FC = () => {
       });
   };
   //   const [addFeatures, setAddFeatures] = useState<string>();
-  const handleEdit = (rowData: any) => {
-    console.log("Edit clicked", rowData);
-    // Open modal or navigate
-  };
+  // const handleEdit = (rowData: any) => {
+  //   console.log("Edit clicked", rowData);
+  //   // Open modal or navigate
+  // };
 
    const deleteFeatures = (refFeaturesId: number) => {
     axios
@@ -278,13 +278,13 @@ const Features: React.FC = () => {
               header="Actions"
               body={(rowData) => (
                 <div className="flex gap-3">
-                  <button
+                  {/* <button
                     onClick={() => handleEdit(rowData)}
                     className="bg-blue-100 hover:bg-blue-200 p-2 rounded-full"
                     title="Edit"
                   >
                     <Pencil size={18} color="#2563eb" />
-                  </button>
+                  </button> */}
                   <button
                     onClick={() => deleteFeatures(rowData.refFeaturesId)}
                     className="bg-red-100 hover:bg-red-200 p-2 rounded-full"

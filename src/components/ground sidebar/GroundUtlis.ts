@@ -247,6 +247,7 @@ export const fetchSpecificGround = async ( formData: any) => {
     import.meta.env.VITE_ENCRYPTION_KEY
   );
   localStorage.setItem("JWTtoken", decrypted.token);
+  console.log(decrypted)
   if (decrypted.success) {
     return decrypted;
   }
@@ -319,4 +320,80 @@ export const updateGround = async (formData: UpdateGround) => {
   localStorage.setItem("JWTtoken", decrypted.token);
 
   console.log(decrypted);
+}
+
+export const addAddOnsAvailability = async (formData: any) => {
+  const response = await axios.post(
+    `${import.meta.env.VITE_API_URL}/groundRoutes/addAddonAvailability`,
+    formData,
+    {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("JWTtoken"),
+        "Content-Type": "Application/json",
+      },
+    }
+  );
+  const decrypted = decrypt(
+    response.data[1],
+    response.data[0],
+    import.meta.env.VITE_ENCRYPTION_KEY
+  );
+  localStorage.setItem("JWTtoken", decrypted.token);
+
+  if (decrypted.success) {
+    return decrypted;
+  } else {
+    throw new Error("Failed to fetch sport categories");
+  }
+  
+}
+
+export const removerAddonAvailability = async (formData: any) => {
+  const response = await axios.post(
+    `${import.meta.env.VITE_API_URL}/groundRoutes/deleteAddonAvailability`,
+    formData,
+    {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("JWTtoken"),
+        "Content-Type": "Application/json",
+      },
+    }
+  );
+  const decrypted = decrypt(
+    response.data[1],
+    response.data[0],
+    import.meta.env.VITE_ENCRYPTION_KEY
+  );
+  localStorage.setItem("JWTtoken", decrypted.token);
+
+  if (decrypted.success) {
+    return decrypted;
+  } else {
+    throw new Error("Failed to remove sport categories");
+  }
+}
+
+export const uploadGroundImage = async (formData: any) => {
+  const response = await axios.post(
+    `${import.meta.env.VITE_API_URL}/groundRoutes/uploadGroundImage`,
+    formData,
+    {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("JWTtoken"),
+        "Content-Type": "Application/json",
+      },
+    }
+  );
+  const decrypted = decrypt(
+    response.data[1],
+    response.data[0],
+    import.meta.env.VITE_ENCRYPTION_KEY
+  );
+  localStorage.setItem("JWTtoken", decrypted.token);
+
+  if (decrypted.success) {
+    return decrypted;
+  } else {
+    throw new Error("Failed to remove sport categories");
+  }
 }

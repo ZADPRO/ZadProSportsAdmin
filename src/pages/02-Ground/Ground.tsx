@@ -7,6 +7,7 @@ import { Button } from "primereact/button";
 import { Sidebar } from "primereact/sidebar";
 import GroundSidebar from "../../components/ground sidebar/GroundSidebar";
 import { Trash2 } from "lucide-react";
+import EditGroundSidebar from "../../components/ground sidebar/EditGroundSidebar";
 
 interface GroundResult {
   refGroundId: number;
@@ -38,7 +39,14 @@ const Ground: React.FC = () => {
     []
   );
   const [visibleRight, setVisibleRight] = useState<boolean>(false);
-  const [sidebarForEditData, setSidebarForEditData] = useState<boolean>(false);
+  const [sidebarForEditData, setSidebarForEditData] = useState<{
+  visible: boolean;
+  index: number | null;
+}>({
+  visible: false,
+  index: null,
+});
+
 
   const listGroundApi = () => {
     axios
@@ -57,15 +65,17 @@ const Ground: React.FC = () => {
         localStorage.setItem("JWTtoken", data.token);
 
         if (data.success) {
-          console.log(data);
+          // console.log(data);
           setGetListGroundApi(data.result);
         }
       });
   };
 
-  const handleClick = (rowData: any) => {
-    console.log("rowData", rowData);
-    setSidebarForEditData(true);
+  const handleClick = (index: number) => {
+    setSidebarForEditData({
+      visible: true,
+      index: index
+    });
   };
 
   useEffect(() => {
@@ -107,8 +117,9 @@ const Ground: React.FC = () => {
     <div>
       {/* <Button label="Add New Groud" onClick={() => setVisibleRight(true)} /> */}
       <div
-        style={{ display: "flex", justifyContent: "flex-end", padding: "1rem" }}
+        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1rem" }}
       >
+        <h1 className="font-bold text-3xl text-black mt-4">Grounds</h1>
         <Button label="Add New Ground" onClick={() => setVisibleRight(true)} />
       </div>
 
@@ -130,9 +141,9 @@ const Ground: React.FC = () => {
           filter
           sortable
           frozen
-          body={(rowData) => (
+          body={(rowData, options) => (
             <span
-              onClick={() => handleClick(rowData)}
+              onClick={() => handleClick(options.rowIndex)}
               style={{
                 cursor: "pointer",
                 color: "#007ad9",
@@ -204,6 +215,20 @@ const Ground: React.FC = () => {
         style={{ width: "50%" }}
       >
         <GroundSidebar />
+      </Sidebar>
+
+      <Sidebar
+        visible={sidebarForEditData.visible}
+        onHide={() => setSidebarForEditData({ visible: false, index: null })}
+        position="right"
+        style={{ width: "80%" }}
+      >
+        {typeof sidebarForEditData.index === "number" &&
+          getListGroundApi[sidebarForEditData.index] && (
+            <EditGroundSidebar
+              groundData={getListGroundApi[sidebarForEditData.index]}
+            />
+          )}
       </Sidebar>
     </div>
   );

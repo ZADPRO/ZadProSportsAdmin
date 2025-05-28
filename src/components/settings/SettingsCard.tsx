@@ -3,28 +3,28 @@ import React, { useState } from "react";
 // import SettingsSideBar from "./SettingsSideBar";
 import { Sidebar } from "primereact/sidebar";
 import { Button } from "primereact/button";
-import SportCategory from "./SportCategory";
+// import SportCategory from "./SportCategory";
 import Features from "./Features";
 import UserGuidelines from "./UserGuidlines";
 import Facilities from "./Feacilities";
 import AdditionalTips from "./AdditionalTips";
-import FoodAndSnacks from "./FoodandSnacks";
+// import FoodAndSnacks from "./FoodandSnacks";
 
 const SettingsCard: React.FC = () => {
-  const [sportvisibleRight, setsportvisibleRight] = useState<boolean>(false);
+  // const [sportvisibleRight, setsportvisibleRight] = useState<boolean>(false);
   const [featuresvisibleRight, setFeaturesVisibleRight] =
     useState<boolean>(false);
   const [visibleRight, setVisibleRight] = useState<boolean>(false);
   const [facilitiesvisibleRight, setFacilitiesVisibleRight] =
     useState<boolean>(false);
   const [tipsvisibleRight, setTipsVisibleRight] = useState<boolean>(false);
-  const [foodvisibleRight, setFoodVisibleRight] = useState<boolean>(false);
-  const [combovisibleRight, setComboVisibleRight] = useState<boolean>(false);
+  // const [foodvisibleRight, setFoodVisibleRight] = useState<boolean>(false);
+  // const [combovisibleRight, setComboVisibleRight] = useState<boolean>(false);
 
   return (
     <div className="overall">
       <div className=" firstrow m-3 flex">
-        <div className="m-3 flex-1">
+        {/* <div className="m-3 flex-1">
           <div className="card ">
             <Card title="Sports Category" style={{ textAlign: "left" }}>
               <div
@@ -52,7 +52,7 @@ const SettingsCard: React.FC = () => {
               <SportCategory />
             </Sidebar>{" "}
           </div>
-        </div>
+        </div> */}
         <div className="m-3 flex-1">
           <div className="card flex-1">
             <Card title="Features" style={{ textAlign: "left" }}>
@@ -174,7 +174,7 @@ const SettingsCard: React.FC = () => {
           </div>
         </div>
         <div className="m-3 flex-1">
-          <div className="card flex-1 ">
+          {/* <div className="card flex-1 ">
             <Card title="Food And Snacks" style={{ textAlign: "left" }}>
               <div
                 style={{
@@ -200,10 +200,10 @@ const SettingsCard: React.FC = () => {
                 <FoodAndSnacks/>
               </Sidebar>{" "}
             </Card>
-          </div>
+          </div> */}
         </div>
         <div className="m-3 flex-1">
-          <div className="card flex-1 ">
+          {/* <div className="card flex-1 ">
             <Card title="Food Combo" style={{ textAlign: "left" }}>
               <div
                 style={{
@@ -234,7 +234,7 @@ const SettingsCard: React.FC = () => {
                 </p>
               </Sidebar>{" "}
             </Card>
-          </div>
+          </div> */}
         </div>
         <div className="m-3 flex-1"></div>
       </div>

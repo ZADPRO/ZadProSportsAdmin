@@ -6,7 +6,7 @@ import { Button } from "primereact/button";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Toast } from "primereact/toast";
-import { Pencil, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 interface Tip {
   refAdditionalTipsId: number;
@@ -95,10 +95,10 @@ const AdditionalTips: React.FC = () => {
       });
   };
 
-  const handleEdit = (rowData: Tip) => {
-    console.log("Edit clicked", rowData);
-    // Implement edit logic here
-  };
+  // const handleEdit = (rowData: Tip) => {
+  //   console.log("Edit clicked", rowData);
+  //   // Implement edit logic here
+  // };
 
 
 
@@ -173,13 +173,13 @@ const AdditionalTips: React.FC = () => {
               header="Actions"
               body={(rowData) => (
                 <div className="flex gap-5">
-                  <button
+                  {/* <button
                     onClick={() => handleEdit(rowData)}
                     className="bg-blue-100 text-blue-600 hover:bg-blue-200 p-2 rounded-full"
                     title="Edit"
                   >
                     <Pencil size={18} color="#2563eb" />
-                  </button>
+                  </button> */}
                   <button
                     onClick={() => deleteTips(rowData.refAdditionalTipsId)}
                     className="bg-red-100 text-red-600 hover:bg-red-200 p-2 rounded-full"

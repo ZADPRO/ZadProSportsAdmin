@@ -1,11 +1,10 @@
-import React, { useEffect, useState, type ReactNode } from "react";
+import React, { useState, type ReactNode } from "react";
 
 import { AnimatePresence, motion } from "framer-motion";
 
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   Bolt,
-  LayoutGrid,
   LogOut,
   Menu,
   SquareCheckBig,
@@ -20,11 +19,11 @@ interface HeaderProps {
 }
 
 const employeeRoutes = [
-  {
-    path: "/",
-    name: "Dashboard",
-    icon: <LayoutGrid />,
-  },
+  // {
+  //   path: "/dashboard",
+  //   name: "Dashboard",
+  //   icon: <LayoutGrid />,
+  // },
   {
     path: "/ground",
     name: "Ground",

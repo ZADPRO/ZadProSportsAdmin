@@ -30,7 +30,7 @@ const Login: React.FC = () => {
           localStorage.setItem("JWTtoken", data.token);
           localStorage.setItem("userId", data.userId);
           localStorage.setItem("roleId", data.roleId);
-          navigate("/");
+          navigate("/ground");
         }
       });
   };

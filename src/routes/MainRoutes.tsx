@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
   useLocation,
+  Navigate,
 } from "react-router-dom";
 
 import PropTypes from "prop-types";
@@ -22,7 +23,7 @@ const MainRoutes: React.FC = () => {
       <Router>
         <ConditionalHeader>
           <Routes>
-            <Route path="/" element={<Login />} />
+            <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
             <Route path="/ground" element={<Ground />} />
             <Route path="/Userlist" element={<Userlist />} />
@@ -43,7 +44,7 @@ function ConditionalHeader({ children }: ConditionalHeaderProps) {
   const location = useLocation();
 
   // INITIALIZE THE LOGIN ROUTE THAT IT WAS PRESENT IN THE PATH NAME OR NOT
-  const excludedRoutes = ["/login"];
+  const excludedRoutes = ["/", "/login"];
   const isExcluded = excludedRoutes.includes(location.pathname);
 
   // IF THE PATH - LOGIN WAS FOUND IN PATHNAME, THEN IT DOESN'T RETURN THE HEADER, OTHERWISE IT WILL REUTRN THE HEADER AS A PARENT
