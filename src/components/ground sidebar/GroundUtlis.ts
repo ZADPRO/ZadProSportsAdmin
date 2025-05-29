@@ -4,7 +4,7 @@ import decrypt from "../../common/helper";
 export interface GroundAdd {
   refGroundName: string;
   isAddOnAvailable: boolean;
-  refAddOnsId: number;
+  refAddOnsId: string[];
   refFeaturesId: string[];
   refUserGuidelinesId: string[];
   refFacilitiesId: string[];
@@ -301,6 +301,33 @@ export const fetchAddOnAvailability = async () => {
   }
 }
 
+export const createNewGround = async (formData: GroundAdd) => {
+  const response = await axios.post(
+    `${import.meta.env.VITE_API_URL}/groundRoutes/addGround`,
+    formData,
+    {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("JWTtoken"),
+        "Content-Type": "Application/json",
+      },
+    }
+  );
+  const decrypted = decrypt(
+    response.data[1],
+    response.data[0],
+    import.meta.env.VITE_ENCRYPTION_KEY
+  );
+  localStorage.setItem("JWTtoken", decrypted.token);
+
+  console.log(decrypted);
+
+  if (decrypted.success) {
+    return decrypted;
+  } else {
+    throw new Error("Failed to remove sport categories");
+  }
+}
+
 export const updateGround = async (formData: UpdateGround) => {
   const response = await axios.post(
     `${import.meta.env.VITE_API_URL}/groundRoutes/updateGround`,
@@ -320,6 +347,12 @@ export const updateGround = async (formData: UpdateGround) => {
   localStorage.setItem("JWTtoken", decrypted.token);
 
   console.log(decrypted);
+
+  if (decrypted.success) {
+    return decrypted;
+  } else {
+    throw new Error("Failed to remove sport categories");
+  }
 }
 
 export const addAddOnsAvailability = async (formData: any) => {
@@ -390,10 +423,29 @@ export const uploadGroundImage = async (formData: any) => {
     import.meta.env.VITE_ENCRYPTION_KEY
   );
   localStorage.setItem("JWTtoken", decrypted.token);
-
+  console.log(decrypted)
   if (decrypted.success) {
     return decrypted;
   } else {
-    throw new Error("Failed to remove sport categories");
+    throw new Error("Failed to update details");
   }
+}
+
+export const createNewAddons = async (formData: any) => {
+  const response = await axios.post(
+    `${import.meta.env.VITE_API_URL}/groundRoutes/addAddons`,
+    formData,
+    {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("JWTtoken"),
+        "Content-Type": "Application/json",
+      },
+    }
+  );
+  const decrypted = decrypt(
+    response.data[1],
+    response.data[0],
+    import.meta.env.VITE_ENCRYPTION_KEY
+  );
+  localStorage.setItem("JWTtoken", decrypted.token);
 }

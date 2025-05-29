@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   addAddOnsAvailability,
   fetchAdditionalTips,
@@ -22,9 +22,14 @@ import { Calendar } from "primereact/calendar";
 import { Panel } from "primereact/panel";
 import { Chip } from "primereact/chip";
 import { FileUpload } from "primereact/fileupload";
+import { Divider } from "primereact/divider";
+// import type { OverlayPanel as OverlayPanelType } from 'primereact/overlaypanel';
+import { Toast } from "primereact/toast";
+
 
 interface EditGroundSidebarProps {
-  groundData: any; // Or number, if your ID is a number. Or any other appropriate type.
+  groundData: any;
+  onSuccess: () => void;
 }
 
 interface AddOnItem {
@@ -45,9 +50,8 @@ interface GroundImage {
   filename: string;       // original filename
 };
 
-const EditGroundSidebar: React.FC<EditGroundSidebarProps> = ({
-  groundData,
-}) => {
+const EditGroundSidebar: React.FC<EditGroundSidebarProps> = ({ groundData, onSuccess }) => {
+
   const [groundDetails, setGroundDetails] = useState<GroundResult | null>(null);
 
   const [groundFeatures, setGroundFeatures] = useState([]);
@@ -57,12 +61,17 @@ const EditGroundSidebar: React.FC<EditGroundSidebarProps> = ({
   const [additionalTips, setAdditionalTips] = useState([]);
 
   const [addOns, setAddOns] = useState<AddOnItem[]>([]);
+  // const [newAddOnName, setNewAddOnName] = useState("");
   
 const [groundImg, setGroundImg] = useState<GroundImage | null>(null);
 
   const [selectedAddonDates, setSelectedAddonDates] = useState<
     SelectedAddonDates[]
   >([]);
+
+// const op = useRef<OverlayPanelType>(null);
+
+  const toast = useRef<Toast>(null);
 
   const GroundFeatures = async () => {
     try {
@@ -129,39 +138,47 @@ const [groundImg, setGroundImg] = useState<GroundImage | null>(null);
   };
 
   const GroundDetails = async () => {
-    try {
-      const t = { refGroundId: groundData.refGroundId };
-      const result = await fetchSpecificGround(t);
-      console.log("result", result);
+  try {
+    const t = { refGroundId: groundData.refGroundId };
+    const result = await fetchSpecificGround(t);
+    console.log("result", result);
 
-      const rawData = result.getAddons?.[0]?.arraydata || [];
-      setGroundImg(result.imgResult?.[0].refGroundImage || "");
+    const rawData = result.getAddons?.[0]?.arraydata || [];
+    const listAddons = result.listOfAddones || [];
 
-      // Group the addons by refGroundId
-      const groupedAddOnsArray: AddOnItem[] = Object.values(
-        rawData.reduce((acc: Record<string, AddOnItem>, item: any) => {
-          const key = item.refAddOnsId?.toString() ?? "null";
+    setGroundImg(result.imgResult?.[0].refGroundImage || "");
 
-          if (!acc[key]) {
-            acc[key] = {
-              refGroundId: item.refGroundId,
-              refAddonId: item.refAddOnsId,
-              refAddOnName: item.refAddOn,
-              data: [],
-            };
-          }
+    // Get today's date (zeroed time)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-          acc[key].data.push(item);
-          return acc;
-        }, {} as Record<string, AddOnItem>)
-      );
-      setAddOns(groupedAddOnsArray);
-      
-      console.log(groupedAddOnsArray);
-    } catch (error) {
-      console.error("Error in GroundDetails:", error);
-    }
-  };
+    // Group based on listAddons and filter out past dates
+    const groupedAddOnsArray: AddOnItem[] = listAddons.map((addon: any) => {
+      const matchingData = rawData
+        .filter((item: any) => item.refAddOnsId === addon.refAddOnsId)
+        .filter((item: any) => {
+          const itemDate = new Date(item.unAvailabilityDate); // adjust field name if different
+          if (isNaN(itemDate.getTime())) return false; // skip invalid dates
+
+          itemDate.setHours(0, 0, 0, 0); // ignore time
+          return itemDate >= today;
+        });
+
+      return {
+        refGroundId: groundData.refGroundId,
+        refAddonId: addon.refAddOnsId,
+        refAddOnName: addon.refAddOn,
+        data: matchingData,
+      };
+    });
+
+    setAddOns(groupedAddOnsArray);
+    console.log(groupedAddOnsArray);
+  } catch (error) {
+    console.error("Error in GroundDetails:", error);
+  }
+};
+
 
   useEffect(() => {
     setGroundDetails(groundData);
@@ -195,12 +212,22 @@ const [groundImg, setGroundImg] = useState<GroundImage | null>(null);
           refGroundPincode: groundDetails.refGroundPincode,
           refGroundState: groundDetails.refGroundState,
           refDescription: groundDetails.refDescription,
-          IframeLink: groundData.IframeLink,
+          IframeLink: groundDetails.IframeLink,
           refStatus: groundDetails.refStatus,
         };
         console.log("payload", payload);
         const response = await updateGround(payload);
-        console.log("response", response);
+        if(response.success){
+          toast.current?.show({
+          severity: "success",
+          summary: "Success",
+          detail: "Updated successfully!",
+          life: 3000,
+        });
+        setTimeout(() => {
+          onSuccess();
+        }, 1500);
+        }
       }
     } catch (error) {
       console.log("error", error);
@@ -317,7 +344,13 @@ const customMap = async (event: any) => {
       
       
       if (response.success) {
-        console.log("data+", response);
+        toast.current?.show({
+          severity: "success",
+          summary: "Success",
+          detail: "Image uploaded successfully!",
+          life: 3000,
+        });
+        // console.log("data+", response);
         setGroundImg(response.files[0]);
         setGroundDetails((prev) => ({
           ...prev!,
@@ -345,6 +378,26 @@ const customMap = async (event: any) => {
   };
  
 
+//   const handleAddNewAddon = async () => {
+//   if (!newAddOnName) return;
+
+//   try {
+//     const payload = {
+//       addOns: newAddOnName,
+//       refGroundId: groundData.refGroundId,
+//       refStatus: true,
+//     };
+
+//     const response = await createNewAddons(payload);
+//     console.log("response", response);
+
+//     // Optional: handle success (e.g., clear input or show message)
+//   } catch (error) {
+//     console.error("Error adding new add-on:", error);
+//     // Optional: show error to the user
+//   }
+// };
+
 
   
   console.log(groundDetails);
@@ -368,14 +421,17 @@ const customMap = async (event: any) => {
           >
             {/* Image container */}
             <div className="flex gap-2 justify-between items-start duration-300 rounded-lg">
-              <img
-                src={
-                  groundImg?.filename &&
-                  `data:${groundImg.contentType};base64,${groundImg.content}`
-                }
-                alt={groundImg?.filename || "Preview"}
-                className="object-cover w-64 h-64 rounded-lg border-2"
-              />
+              {groundImg?.filename ? (
+                <img
+                  src={`data:${groundImg.contentType};base64,${groundImg.content}`}
+                  alt={groundImg.filename}
+                  className="object-cover w-64 h-64 rounded-lg border-2"
+                />
+              ) : (
+                <div className="w-64 h-64 flex items-center justify-center border-2 rounded-lg text-gray-500 bg-gray-100">
+                  No image available
+                </div>
+              )}
 
               <FileUpload
                 name="logo"
@@ -506,6 +562,26 @@ const customMap = async (event: any) => {
             </div>
           </div>
 
+          <div className="flex gap-3 mt-3">
+            <div className="flex-1">
+              <label
+                className="block mb-1 font-medium text-black"
+                htmlFor="iFrameLink"
+              >
+                Location (Iframe Link):
+              </label>
+              <InputText
+                id="iFrameLink"
+                className="w-full"
+                placeholder="Location IFrame Link"
+                value={groundDetails?.IframeLink || ""}
+                onChange={(e) =>
+                  handleInputChange("IframeLink", e.target.value)
+                }
+              />
+            </div>
+          </div>
+
           <div className="flex gap-3">
             <div className="card flex-1 justify-content-center mt-3">
               <label
@@ -629,22 +705,47 @@ const customMap = async (event: any) => {
         <TabPanel header="Additional Details">
           <div className="flex items-center justify-between mt-3">
             <span className="block mb-1 font-medium text-black">Add-Ons:</span>
-            {/* <Button type="button" onClick={handleAddAddOn}>
-              Add
-            </Button> */}
+            {/* <Button
+              type="button"
+              label="Create New AddOn"
+              onClick={(e) => op.current?.toggle(e)}
+            />
+            <OverlayPanel ref={op}>
+              <div className="flex-1 gap-2 flex flex-col">
+                <label
+                  className="block mb-1 font-medium text-black"
+                  htmlFor="newAddOn"
+                >
+                  Add On Name:
+                </label>
+                <InputText
+                  id="newAddOn"
+                  className="w-full flex-1"
+                  placeholder="Enter Addon Name"
+                  value={newAddOnName}
+                  onChange={(e) => setNewAddOnName(e.target.value)}
+                />
+                <Button type="button" label="Add" onClick={handleAddNewAddon}/>
+              </div>
+            </OverlayPanel> */}
           </div>
+
+          <Divider />
 
           <div className="flex flex-col gap-4">
             {addOns.map((addon, addonIndex) => {
               const selectedEntry = selectedAddonDates.find(
                 (entry) => entry.refAddonId === addon.refAddonId
               );
+              const disabledDates = addon.data
+                .map((item: any) => new Date(item.unAvailabilityDate))
+                .filter((date) => !isNaN(date.getTime())); // Filter out invalid dates
 
               return (
                 <Panel key={addonIndex} header={addon.refAddOnName} toggleable>
                   {/* <p className="m-0 mb-2">Add-on ID: {addon.refAddonId}</p> */}
 
-                  <div className="flex gap-2 justify-between">
+                  <div className="flex gap-2 mt-2 justify-between">
                     <Calendar
                       value={selectedEntry?.dates || []}
                       onChange={(e) =>
@@ -655,7 +756,8 @@ const customMap = async (event: any) => {
                       }
                       selectionMode="multiple"
                       placeholder="Enter Your Unavailable Dates"
-                      readOnlyInput
+                      disabledDates={disabledDates}
+                      minDate={new Date()}
                       className="mb-2 w-full"
                     />
 
@@ -663,9 +765,7 @@ const customMap = async (event: any) => {
                       type="button"
                       label="Add"
                       icon="pi pi-plus"
-                      onClick={() =>
-                        handleAddDates(addon.refAddonId)
-                      }
+                      onClick={() => handleAddDates(addon.refAddonId)}
                       className="mb-3"
                     />
                   </div>
@@ -696,6 +796,7 @@ const customMap = async (event: any) => {
           </div>
         </TabPanel>
       </TabView>
+      <Toast ref={toast} />
     </form>
   );
 };

@@ -6,6 +6,7 @@ import { Password } from "primereact/password";
 import React, { useState } from "react";
 import decrypt from "../../common/helper";
 import { useNavigate } from "react-router-dom";
+import logo from "../../assets/Zad Sports Logo-03.png"
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -36,7 +37,10 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="m-3 flex justify-center items-center h-screen">
+    <div className="m-3 flex flex-col justify-center items-center h-screen">
+      <div>
+        <img src={logo} className="w-50 h-30"/>
+      </div>
       <div className="card">
         <Card title="Admin Login" style={{ textAlign: "center" }}>
           <div className="p-inputgroup flex-1">

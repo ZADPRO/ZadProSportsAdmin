@@ -1,13 +1,14 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import decrypt from "../../common/helper";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
-// import { Button } from "primereact/button";
+import { Button } from "primereact/button";
 import { Sidebar } from "primereact/sidebar";
 import GroundSidebar from "../../components/ground sidebar/GroundSidebar";
 import { Trash2 } from "lucide-react";
 import EditGroundSidebar from "../../components/ground sidebar/EditGroundSidebar";
+import { Toast } from "primereact/toast";
 
 interface GroundResult {
   refGroundId: number;
@@ -47,6 +48,7 @@ const Ground: React.FC = () => {
   index: null,
 });
 
+  const toast = useRef<Toast>(null);
 
   const listGroundApi = () => {
     axios
@@ -82,6 +84,12 @@ const Ground: React.FC = () => {
     listGroundApi();
   }, []);
 
+  const handleEditSuccess = () => {
+  setSidebarForEditData({ visible: false, index: null }); // close sidebar
+  setVisibleRight(false); // close modal)
+  listGroundApi(); // refetch or run any function
+};
+
   const deleteGround = (refGroundId: number) => {
     axios
       .post(
@@ -103,6 +111,12 @@ const Ground: React.FC = () => {
         localStorage.setItem("JWTtoken", data.token);
         if (data.success) {
           console.log("Deleted Successfully");
+           toast.current?.show({
+          severity: "success",
+          summary: "Success",
+          detail: "Deleted successfully!",
+          life: 3000,
+        });
           listGroundApi(); // Refresh list after delete
         } else {
           console.error("Failed to delete item");
@@ -113,14 +127,21 @@ const Ground: React.FC = () => {
       });
   };
 
+  console.log(getListGroundApi);
+
   return (
     <div>
       {/* <Button label="Add New Groud" onClick={() => setVisibleRight(true)} /> */}
       <div
-        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1rem" }}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "1rem",
+        }}
       >
         <h1 className="font-bold text-3xl text-black mt-4">Grounds</h1>
-        {/* <Button label="Add New Ground" onClick={() => setVisibleRight(true)} /> */}
+        <Button label="Add New Ground" onClick={() => setVisibleRight(true)} />
       </div>
 
       <DataTable
@@ -171,7 +192,7 @@ const Ground: React.FC = () => {
           header="Ground Location"
           style={{ minWidth: "14rem" }}
         ></Column>
-        <Column
+        {/* <Column
           field="refSportsCategoryName"
           header="Sports Category"
           style={{ minWidth: "14rem" }}
@@ -190,13 +211,18 @@ const Ground: React.FC = () => {
           field="refAdditionalTipsName"
           header="Additional Tips"
           style={{ minWidth: "20rem" }}
+        ></Column> */}
+        <Column
+          field="refDescription"
+          header="Description"
+          style={{ minWidth: "20rem" }}
         ></Column>
         <Column
           header="Delete"
           body={(rowData) => (
             <div className="flex gap-5">
               <button
-                className="bg-red-100 text-red-600 hover:bg-red-200 p-2 rounded-full"
+                className="bg-red-100 text-red-600 hover:bg-red-200 p-2 rounded-full cursor-pointer"
                 title="Delete"
                 onClick={() => deleteGround(rowData.refGroundId)}
               >
@@ -212,24 +238,26 @@ const Ground: React.FC = () => {
         visible={visibleRight}
         position="right"
         onHide={() => setVisibleRight(false)}
-        style={{ width: "50%" }}
+        style={{ width: "60%" }}
       >
-        <GroundSidebar />
+        <GroundSidebar onSuccess={handleEditSuccess}/>
       </Sidebar>
 
       <Sidebar
         visible={sidebarForEditData.visible}
         onHide={() => setSidebarForEditData({ visible: false, index: null })}
         position="right"
-        style={{ width: "80%" }}
+        style={{ width: "60%" }}
       >
         {typeof sidebarForEditData.index === "number" &&
           getListGroundApi[sidebarForEditData.index] && (
             <EditGroundSidebar
               groundData={getListGroundApi[sidebarForEditData.index]}
+              onSuccess={handleEditSuccess} // <<< pass the callback here
             />
           )}
       </Sidebar>
+      <Toast ref={toast} />
     </div>
   );
 };
