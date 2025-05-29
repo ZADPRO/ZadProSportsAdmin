@@ -27,7 +27,7 @@ const Login: React.FC = () => {
           import.meta.env.VITE_ENCRYPTION_KEY
         );
         if (data.success) {
-          console.log("data", data);
+          // console.log("data", data);
           localStorage.setItem("JWTtoken", data.token);
           localStorage.setItem("userId", data.userId);
           localStorage.setItem("roleId", data.roleId);
@@ -52,7 +52,7 @@ const Login: React.FC = () => {
               className="w-full"
               value={userName}
               onChange={(a) => {
-                console.log("e", a.target.value);
+                // console.log("e", a.target.value);
                 setUserName(a.target.value);
               }}
             />
