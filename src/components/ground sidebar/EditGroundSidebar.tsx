@@ -157,10 +157,15 @@ const [groundImg, setGroundImg] = useState<GroundImage | null>(null);
       const matchingData = rawData
         .filter((item: any) => item.refAddOnsId === addon.refAddOnsId)
         .filter((item: any) => {
-          const itemDate = new Date(item.unAvailabilityDate); // adjust field name if different
-          if (isNaN(itemDate.getTime())) return false; // skip invalid dates
+          if (!item.unAvailabilityDate) return false;
 
-          itemDate.setHours(0, 0, 0, 0); // ignore time
+          const itemDate = parseDDMMYYYY(item.unAvailabilityDate);
+          if (isNaN(itemDate.getTime())) return false;
+
+          itemDate.setHours(0, 0, 0, 0);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+
           return itemDate >= today;
         });
 
@@ -278,7 +283,7 @@ const [groundImg, setGroundImg] = useState<GroundImage | null>(null);
 
     try {
       const payloads = selected.dates.map((date) => ({
-        unAvailabilityDate: date.toISOString().split("T")[0],
+        unAvailabilityDate: date.toLocaleDateString("en-GB").split('/').join('-'),
         refAddOnsId: refAddonId,
         refGroundId: groundData.refGroundId,
       }));
@@ -398,6 +403,10 @@ const customMap = async (event: any) => {
 //   }
 // };
 
+const parseDDMMYYYY = (dateStr: string): Date => {
+  const [day, month, year] = dateStr.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
 
   
   console.log(groundDetails);
@@ -738,8 +747,13 @@ const customMap = async (event: any) => {
                 (entry) => entry.refAddonId === addon.refAddonId
               );
               const disabledDates = addon.data
-                .map((item: any) => new Date(item.unAvailabilityDate))
-                .filter((date) => !isNaN(date.getTime())); // Filter out invalid dates
+                .map((item: any) => {
+                  if (!item.unAvailabilityDate) return null;
+
+                  const parsedDate = parseDDMMYYYY(item.unAvailabilityDate);
+                  return isNaN(parsedDate.getTime()) ? null : parsedDate;
+                })
+                .filter((date) => date !== null);
 
               return (
                 <Panel key={addonIndex} header={addon.refAddOnName} toggleable>
@@ -775,8 +789,8 @@ const customMap = async (event: any) => {
                       .slice()
                       .sort(
                         (a: any, b: any) =>
-                          new Date(a.unAvailabilityDate).getTime() -
-                          new Date(b.unAvailabilityDate).getTime()
+                          parseDDMMYYYY(a.unAvailabilityDate).getTime() -
+                          parseDDMMYYYY(b.unAvailabilityDate).getTime()
                       )
                       .map((item: any, dateIndex: number) => (
                         <Chip
