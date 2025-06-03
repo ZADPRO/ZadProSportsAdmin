@@ -16,6 +16,8 @@ import Header from "../components/Header/Header";
 import Userlist from "../pages/03-UserList/UserList";
 import Booking from "../pages/04-Booking/Booking";
 import Login from "../pages/05-Login/login";
+import ProtectedRoute from "../components/ProtectedRoute";
+import Dashboard from "../pages/00-Dashboard/Dashboard";
 
 const MainRoutes: React.FC = () => {
   return (
@@ -25,10 +27,46 @@ const MainRoutes: React.FC = () => {
           <Routes>
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/ground" element={<Ground />} />
-            <Route path="/Userlist" element={<Userlist />} />
-            <Route path="/booking" element={<Booking />} />
-            <Route path="/settings" element={<Settings />} />
+            <Route path="/dashboard" element={<Dashboard/>} />
+
+            {/* Admin-only routes */}
+            <Route
+              path="/Userlist"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <Userlist />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "owner"]}>
+                  <Settings />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* User and Admin routes */}
+            <Route
+              path="/ground"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "owner"]}>
+                  <Ground />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/booking"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "owner"]}>
+                  <Booking />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Optional Unauthorized route */}
+            <Route path="/unauthorized" element={<div>Unauthorized</div>} />
           </Routes>
         </ConditionalHeader>
       </Router>

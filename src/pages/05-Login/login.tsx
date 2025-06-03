@@ -7,9 +7,12 @@ import React, { useState } from "react";
 import decrypt from "../../common/helper";
 import { useNavigate } from "react-router-dom";
 import logo from "../../assets/Zad Sports Logo-03.png"
+import { useUser } from "../../context/UserContext";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
+
+  const { setUser } = useUser();
 
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
@@ -26,11 +29,23 @@ const Login: React.FC = () => {
           response.data[0],
           import.meta.env.VITE_ENCRYPTION_KEY
         );
+        console.log("data", data);
         if (data.success) {
-          // console.log("data", data);
+          
+          if(data.roleId === 1) {
+            setUser({
+            isAuthenticated: true,
+            role: "admin",
+          });
+          } else if(data.roleId === 3) {
+            setUser({
+              isAuthenticated: true,
+              role: "owner",
+            });
+          }
+          
           localStorage.setItem("JWTtoken", data.token);
           localStorage.setItem("userId", data.userId);
-          localStorage.setItem("roleId", data.roleId);
           navigate("/ground");
         }
       });
@@ -42,7 +57,7 @@ const Login: React.FC = () => {
         <img src={logo} className="w-50 h-30"/>
       </div>
       <div className="card">
-        <Card title="Admin Login" style={{ textAlign: "center" }}>
+        <Card>
           <div className="p-inputgroup flex-1">
             <span className="p-inputgroup-addon">
               <i className="pi pi-user"></i>

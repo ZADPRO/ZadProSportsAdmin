@@ -18,22 +18,15 @@ import {
 import { TabView, TabPanel } from "primereact/tabview";
 import { FileUpload } from "primereact/fileupload";
 import { Toast } from "primereact/toast";
+import { Panel } from "primereact/panel";
+import { Divider } from "primereact/divider";
+import { InputSwitch } from "primereact/inputswitch";
+import { Sidebar } from "primereact/sidebar";
+import CreateAddOns from "./CreateAddOns";
 
 interface AddGroundSidebarProps {
   onSuccess: () => void;
 }
-
-// interface AddOnItem {
-//   refGroundId: number;
-//   refAddonId: number;
-//   refAddOnName: string;
-//   data: any[]; // You can define a more specific type if known
-// }
-
-// type SelectedAddonDates = {
-//   refAddonId: number;
-//   dates: Date[];
-// };
 
 interface GroundImage {
   content: string;        // base64 image data
@@ -46,12 +39,13 @@ const GroundSidebar: React.FC<AddGroundSidebarProps> = ({ onSuccess }) => {
 const [groundDetails, setGroundDetails] = useState<GroundAdd>({
   refGroundName: "",
   isAddOnAvailable: true,
-  refAddOnsId: [],
+  refAddOns: [],
   refFeaturesId: [],
   refUserGuidelinesId: [],
   refFacilitiesId: [],
   refAdditionalTipsId: [],
   refSportsCategoryId: [],
+  refTournamentPrice: "",
   refGroundPrice: "",
   refGroundImage: "",
   refGroundLocation: "",
@@ -66,15 +60,35 @@ const [groundFeatures, setGroundFeatures] = useState([]);
   const [userGuidelines, setUserGuidelines] = useState([]);
   const [facilities, setFacilities] = useState([]);
   const [additionalTips, setAdditionalTips] = useState([]);
-
   
 const [groundImg, setGroundImg] = useState<GroundImage | null>(null);
 
-  // const [selectedAddonDates, setSelectedAddonDates] = useState<
-  //   SelectedAddonDates[]
-  // >([]);
+  const [newAddonSidebar, setNewAddonSidebar] = useState(false);
+const [editingAddon, setEditingAddon] = useState<string | null>(null); // or an AddOn object
+const [editingIndex, setEditingIndex] = useState<number | null>(null);
+const [isEditing, setIsEditing] = useState(false);
 
-// const op = useRef<OverlayPanelType>(null);
+// To open for new add-on
+const handleAddNew = () => {
+  setEditingAddon(null);
+  setEditingIndex(null);
+  setIsEditing(false);
+  setNewAddonSidebar(true);
+};
+
+// To edit existing
+const handleEditAddon = (addon: any, index: number) => {
+  setEditingAddon(JSON.stringify(addon));
+  setEditingIndex(index);
+  setIsEditing(true);
+  setNewAddonSidebar(true);
+};
+
+const handleRemoveAddon = (index: number) => {
+  const updatedAddons = [...groundDetails.refAddOns];
+  updatedAddons.splice(index, 1);
+  setGroundDetails({ ...groundDetails, refAddOns: updatedAddons });
+}
 
   const toast = useRef<Toast>(null);
 
@@ -223,11 +237,11 @@ const [groundImg, setGroundImg] = useState<GroundImage | null>(null);
           
           if (response.success) {
             toast.current?.show({
-          severity: "success",
-          summary: "Success",
-          detail: "Image Upload successfully!",
-          life: 3000,
-        });
+              severity: "success",
+              summary: "Success",
+              detail: "Image Upload successfully!",
+              life: 3000,
+            });
             console.log("data+", response);
             setGroundImg(response.files[0]);
             setGroundDetails((prev) => ({
@@ -280,12 +294,67 @@ const [groundImg, setGroundImg] = useState<GroundImage | null>(null);
         console.log("error", error);
       }
     }
-    
+  
+  // const handleRemoveDate = async (addonAvailabilityId: number) => {
+  //     const response = await removerAddonAvailability({ addOnsAvailabilityId: addonAvailabilityId });
+  //     console.log("response", response);
+  //     // if(response.success) {
+  
+  //     // }
+  
+  //     // setAddOns((prev) =>
+  //     //   prev.map((addon, i) =>
+  //     //     i === addonIndex
+  //     //       ? {
+  //     //           ...addon,
+  //     //           data: addon.data.filter((_, j) => j !== dateIndex),
+  //     //         }
+  //     //       : addon
+  //     //   )
+  //     // );
+  //   };
+  
+  //   const handleAddDates = async (refAddonId: number) => {
+  //     const selected = selectedAddonDates.find(
+  //       (item) => item.refAddonId === refAddonId
+  //     );
+  //     if (!selected || selected.dates.length === 0) return;
+  
+  //     try {
+  //       const payloads = selected.dates.map((date) => ({
+  //         unAvailabilityDate: date.toLocaleDateString("en-GB").split('/').join('-'),
+  //         refAddOnsId: refAddonId,
+  //         refGroundId: groundData.refGroundId,
+  //       }));
+  
+  //       const responses = await Promise.all(
+  //         payloads.map((payload) => addAddOnsAvailability(payload))
+  //       );
+  
+  //       console.log("All responses:", responses);
+  
+  //       await GroundDetails(); // ensure GroundDetails handles latest data
+  
+  //       // Clear dates for that addon
+  //       setSelectedAddonDates((prev) =>
+  //         prev.map((item) =>
+  //           item.refAddonId === refAddonId ? { ...item, dates: [] } : item
+  //         )
+  //       );
+  //     } catch (error) {
+  //       console.error("Failed to add availability:", error);
+  //     }
+  //   };
+
+
   return (
-    <form onSubmit={(e) => {
+    <form
+      onSubmit={(e) => {
         e.preventDefault();
         handleCreateNewGround();
-      }} className="m-3">
+      }}
+      className="m-3"
+    >
       <h1 className="text-[20px] font-bold uppercase text-black">
         Add New Ground
       </h1>
@@ -316,7 +385,7 @@ const [groundImg, setGroundImg] = useState<GroundImage | null>(null);
                 className="block mb-1 font-medium text-black"
                 htmlFor="groundprice"
               >
-                Ground Price:
+                Ground Per Day Price:
               </label>
               <InputText
                 id="groundprice"
@@ -325,6 +394,24 @@ const [groundImg, setGroundImg] = useState<GroundImage | null>(null);
                 value={groundDetails?.refGroundPrice || ""}
                 onChange={(e) =>
                   handleInputChange("refGroundPrice", e.target.value)
+                }
+                required
+              />
+            </div>
+            <div className="flex-1">
+              <label
+                className="block mb-1 font-medium text-black"
+                htmlFor="refTournamentPrice"
+              >
+                Ground Tournment Price:
+              </label>
+              <InputText
+                id="refTournamentPrice"
+                className="w-full"
+                placeholder="Ground Price"
+                value={groundDetails?.refTournamentPrice || ""}
+                onChange={(e) =>
+                  handleInputChange("refTournamentPrice", e.target.value)
                 }
                 required
               />
@@ -580,12 +667,10 @@ const [groundImg, setGroundImg] = useState<GroundImage | null>(null);
               />
             </div>
           </div>
-          <div className="card flex justify-content-center mt-3">
-            <Button type="submit" label="Create" />
-          </div>
+          
         </TabPanel>
 
-        {/* <TabPanel header="Additional Details">
+        <TabPanel header="Additional Details">
           <div className="flex items-center gap-2 mb-4">
             <span className="block font-medium text-black">
               Do you have Add-Ons?
@@ -604,112 +689,114 @@ const [groundImg, setGroundImg] = useState<GroundImage | null>(null);
           <div>
             {groundDetails.isAddOnAvailable && (
               <>
-            <div className="flex items-center justify-between mt-3">
-              <span className="block mb-1 font-medium text-black">
-                Add-Ons:
-              </span>
-              <Button
-                type="button"
-                label="Create New AddOn"
-                onClick={(e) => op.current?.toggle(e)}
-              />
-              <OverlayPanel ref={op}>
-                <div className="flex-1 gap-2 flex flex-col">
-                  <label
-                    className="block mb-1 font-medium text-black"
-                    htmlFor="newAddOn"
-                  >
-                    Add On Name:
-                  </label>
-                  <InputText
-                    id="newAddOn"
-                    className="w-full flex-1"
-                    placeholder="Enter Addon Name"
-                    value={newAddOnName}
-                    onChange={(e) => setNewAddOnName(e.target.value)}
-                  />
+                <div className="flex items-center justify-between mt-3">
+                  <span className="block mb-1 font-medium text-black">
+                    Add-Ons:
+                  </span>
                   <Button
                     type="button"
-                    label="Add"
-                    onClick={handleAddNewAddon}
+                    label="Create New AddOn"
+                    onClick={() => handleAddNew()}
                   />
                 </div>
-              </OverlayPanel>
-            </div>
 
-            <Divider />
+                <Divider />
 
-            <div className="flex flex-col gap-4">
-              {addOns.map((addon, addonIndex) => {
-                const selectedEntry = selectedAddonDates.find(
-                  (entry) => entry.refAddonId === addon.refAddonId
-                );
-                const disabledDates = addon.data
-                  .map((item: any) => new Date(item.unAvailabilityDate))
-                  .filter((date) => !isNaN(date.getTime())); // Filter out invalid dates
+                <div className="flex flex-col gap-4">
+                  {groundDetails.refAddOns.map((addon, addonIndex) => {
+                    // const selectedEntry = selectedAddonDates.find(
+                    //   (entry) => entry.refAddonId === addon.refAddonId
+                    // );
+                    // const disabledDates = addon.data
+                    //   .map((item: any) => new Date(item.unAvailabilityDate))
+                    //   .filter((date) => !isNaN(date.getTime())); // Filter out invalid dates
 
-                return (
-                  <Panel
-                    key={addonIndex}
-                    header={addon.refAddOnName}
-                    toggleable
-                  >
-                    {/* <p className="m-0 mb-2">Add-on ID: {addon.refAddonId}</p> */} {/*
+                    return (
+                      <Panel key={addonIndex} header={addon.name} toggleable>
+                        {/* <p className="m-0 mb-2">Add-on ID: {addon.refAddonId}</p> */}
+                        <div className="p-4 bg-white rounded-xl shadow-md w-full max-w-md">
+                          <div className="flex justify-between">
+                            <Button
+                              type="button"
+                              className="p-0 mr-2"
+                              label="Edit"
+                              onClick={() => handleEditAddon(addon, addonIndex)}
+                            />
+                            <Button
+                              type="button"
+                              className="p-0"
+                              severity="danger"
+                              icon="pi pi-trash"
+                              onClick={() => handleRemoveAddon(addonIndex)}
+                            />
+                          </div>
 
-                    <div className="flex gap-2 mt-2 justify-between">
-                      <Calendar
-                        value={selectedEntry?.dates || []}
-                        onChange={(e) =>
-                          handleDateChange(
-                            addon.refAddonId,
-                            e.value as Date[] | null
-                          )
-                        }
-                        selectionMode="multiple"
-                        placeholder="Enter Your Unavailable Dates"
-                        disabledDates={disabledDates}
-                        minDate={new Date()}
-                        className="mb-2 w-full"
-                      />
-
-                      <Button
-                        type="button"
-                        label="Add"
-                        icon="pi pi-plus"
-                        onClick={() => handleAddDates(addon.refAddonId)}
-                        className="mb-3"
-                      />
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      {addon.data
-                        .slice()
-                        .sort(
-                          (a: any, b: any) =>
-                            new Date(a.unAvailabilityDate).getTime() -
-                            new Date(b.unAvailabilityDate).getTime()
-                        )
-                        .map((item: any, dateIndex: number) => (
-                          <Chip
-                            key={dateIndex}
-                            label={item.unAvailabilityDate}
-                            removable
-                            onRemove={() => {
-                              handleRemoveDate(item.addOnsAvailabilityId);
-                              return true;
-                            }}
-                          />
-                        ))}
-                    </div>
-                  </Panel>
-                );
-              })}
-            </div>
-            </>
+                          <table className="w-full table-auto border-separate border-spacing-y-2">
+                            <tbody>
+                              <tr>
+                                <td className="font-semibold text-gray-700">
+                                  Name
+                                </td>
+                                <td className="text-gray-900">{addon.name}</td>
+                              </tr>
+                              <tr>
+                                <td className="font-semibold text-gray-700">
+                                  Has Subcategories
+                                </td>
+                                <td className="text-gray-900">
+                                  {addon.isSubaddonsAvailable ? "Yes" : "No"}
+                                </td>
+                              </tr>
+                              {!addon.isSubaddonsAvailable && (
+                                <tr>
+                                  <td className="font-semibold text-gray-700">
+                                    Price
+                                  </td>
+                                  <td className="text-gray-900">
+                                    ₹ {addon.price}
+                                  </td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </Panel>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </div>
-        </TabPanel> */}
+        </TabPanel>
       </TabView>
+
+      <div className="card flex justify-content-center mt-3">
+            <Button type="submit" label="Create" />
+          </div>
+          
+      <Sidebar
+        visible={newAddonSidebar}
+        onHide={() => setNewAddonSidebar(false)}
+        position="right"
+        style={{ width: "50%" }}
+      >
+        <CreateAddOns
+          selectedAddon={editingAddon}
+          onSave={(addonString: string) => {
+            const addon = JSON.parse(addonString); // Convert back to object here
+            console.log("addon", addon);
+            const updatedAddons = [...groundDetails.refAddOns];
+            if (isEditing && editingIndex !== null) {
+              updatedAddons[editingIndex] = addon; // update
+            } else {
+              updatedAddons.push(addon); // create
+            }
+            setGroundDetails({ ...groundDetails, refAddOns: updatedAddons });
+            setNewAddonSidebar(false);
+          }}
+        />
+      </Sidebar>
+
       <Toast ref={toast} />
     </form>
   );

@@ -9,3 +9,12 @@
 .p-panel-header{
   background-color: lightgrey;
 }
+
+.p-togglebutton.p-highlight .p-button{
+  background: #7888e3;
+  color: white;
+}
+
+.p-togglebutton.p-highlight .p-button .p-button-icon-left, .p-togglebutton.p-highlight .p-button .p-button-icon-right {
+  color: white!important;
+}

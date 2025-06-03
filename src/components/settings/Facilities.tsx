@@ -66,6 +66,7 @@ const Facilities: React.FC = () => {
           import.meta.env.VITE_ENCRYPTION_KEY
         );
         localStorage.setItem("JWTtoken", data.token);
+        console.log(data)
         if (data.success) {
           toast.current?.show({
             severity: "success",

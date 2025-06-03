@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   addAddOnsAvailability,
+  deleteAddon,
   fetchAdditionalTips,
   fetchGoundFacilities,
   fetchGroundFeatures,
@@ -23,8 +24,10 @@ import { Panel } from "primereact/panel";
 import { Chip } from "primereact/chip";
 import { FileUpload } from "primereact/fileupload";
 import { Divider } from "primereact/divider";
-// import type { OverlayPanel as OverlayPanelType } from 'primereact/overlaypanel';
 import { Toast } from "primereact/toast";
+import { Sidebar } from "primereact/sidebar";
+import CreateAddOns from "./CreateAddOns";
+import EditAddOns from "./EditAddOns";
 
 
 interface EditGroundSidebarProps {
@@ -33,11 +36,18 @@ interface EditGroundSidebarProps {
 }
 
 interface AddOnItem {
-  refGroundId: number;
-  refAddonId: number;
-  refAddOnName: string;
-  data: any[]; // You can define a more specific type if known
+  id: number;
+  addOn: string;  
+  price: number;
+  unAvailabilityDates: AddOnAvailability[];
+  subAddOns: any[]; // You can define a more specific type if known
 }
+
+type AddOnAvailability = {
+  addOnsAvailabilityId: number;
+  unAvailabilityDate: string;
+  [key: string]: any; // optional: if you have more properties
+};
 
 type SelectedAddonDates = {
   refAddonId: number;
@@ -61,15 +71,37 @@ const EditGroundSidebar: React.FC<EditGroundSidebarProps> = ({ groundData, onSuc
   const [additionalTips, setAdditionalTips] = useState([]);
 
   const [addOns, setAddOns] = useState<AddOnItem[]>([]);
-  // const [newAddOnName, setNewAddOnName] = useState("");
   
+  const [newAddonSidebar, setNewAddonSidebar] = useState(false);
+  const [editAddonSidebar, setEditAddonSidebar] = useState(false);
+
+  const [editingAddon, setEditingAddon] = useState<string | null>(null); // or an AddOn object
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  
+  // To open for new add-on
+  const handleAddNew = () => {
+    setEditingAddon(null);
+    setEditingIndex(null);
+    setIsEditing(false);
+    setNewAddonSidebar(true);
+  };
+  
+  // To edit existing
+  const handleEditAddon = (addon: any, index: number) => {
+    const res = addOns.find((item: any) => item.id === addon.id);
+    setEditingAddon(JSON.stringify(res));
+    setEditingIndex(index);
+    setIsEditing(true);
+    setEditAddonSidebar(true);
+  };
+  
+
 const [groundImg, setGroundImg] = useState<GroundImage | null>(null);
 
   const [selectedAddonDates, setSelectedAddonDates] = useState<
     SelectedAddonDates[]
   >([]);
-
-// const op = useRef<OverlayPanelType>(null);
 
   const toast = useRef<Toast>(null);
 
@@ -140,53 +172,51 @@ const [groundImg, setGroundImg] = useState<GroundImage | null>(null);
   const GroundDetails = async () => {
   try {
     const t = { refGroundId: groundData.refGroundId };
-    const result = await fetchSpecificGround(t);
-    console.log("result", result);
+    const response = await fetchSpecificGround(t);
+    console.log("result", response);
 
-    const rawData = result.getAddons?.[0]?.arraydata || [];
-    const listAddons = result.listOfAddones || [];
+    setGroundDetails(response.result);
+    setGroundImg(response.imgResult?.[0].refGroundImage || "");
 
-    setGroundImg(result.imgResult?.[0].refGroundImage || "");
+    const rawAddOns = response.result?.addOns || [];
+    const availabilityData = response.getAddons?.[0]?.arraydata || [];
 
-    // Get today's date (zeroed time)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Step 1: Create map of refAddOnsId → unavailability objects
+    const unavailabilityMap = new Map<number, any[]>();
 
-    // Group based on listAddons and filter out past dates
-    const groupedAddOnsArray: AddOnItem[] = listAddons.map((addon: any) => {
-      const matchingData = rawData
-        .filter((item: any) => item.refAddOnsId === addon.refAddOnsId)
-        .filter((item: any) => {
-          if (!item.unAvailabilityDate) return false;
-
-          const itemDate = parseDDMMYYYY(item.unAvailabilityDate);
-          if (isNaN(itemDate.getTime())) return false;
-
-          itemDate.setHours(0, 0, 0, 0);
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-
-          return itemDate >= today;
-        });
-
-      return {
-        refGroundId: groundData.refGroundId,
-        refAddonId: addon.refAddOnsId,
-        refAddOnName: addon.refAddOn,
-        data: matchingData,
-      };
+    availabilityData.forEach((entry: any) => {
+      const id = entry.refAddOnsId;
+      if (!unavailabilityMap.has(id)) {
+        unavailabilityMap.set(id, []);
+      }
+      unavailabilityMap.get(id)?.push(entry); // push whole object
     });
 
-    setAddOns(groupedAddOnsArray);
-    console.log(groupedAddOnsArray);
+    // Step 2: Build final addOns with matching unavailability
+    const groupedAddOns = rawAddOns.reduce((acc: any, curr: any) => {
+      const { id, addOn, price, subAddOns } = curr;
+
+      if (!acc[id]) {
+        acc[id] = {
+          id,
+          addOn,
+          price,
+          subAddOns: subAddOns || [],
+          unAvailabilityDates: unavailabilityMap.get(id) || [],
+        };
+      }
+
+      return acc;
+    }, {});
+
+    const groupedAddOnsArray = Object.values(groupedAddOns);
+    setAddOns(groupedAddOnsArray as AddOnItem[]);
   } catch (error) {
     console.error("Error in GroundDetails:", error);
   }
 };
 
-
   useEffect(() => {
-    setGroundDetails(groundData);
     GroundFeatures();
     GroundSportCategory();
     GroundUserGuideLines();
@@ -201,25 +231,46 @@ const [groundImg, setGroundImg] = useState<GroundImage | null>(null);
         console.log("groundDetails", groundDetails);
         console.log("addons", addOns);
 
-        const payload = {
-          refGroundId: groundDetails.refGroundId,
-          refGroundName: groundDetails.refGroundName,
-          isAddOnAvailable: groundDetails.isAddOnAvailable,
-          refAddOnsId: addOns.map((item) => String(item.refAddonId)),
-          refFeaturesId: groundDetails.refFeaturesIds.map(String),
-          refUserGuidelinesId: groundDetails.refUserGuidelinesIds.map(String),
-          refFacilitiesId: groundDetails.refFacilitiesIds.map(String),
-          refAdditionalTipsId: groundDetails.refAdditionalTipsIds.map(String),
-          refSportsCategoryId: groundDetails.refSportsCategoryIds.map(String),
-          refGroundPrice: groundDetails.refGroundPrice,
-          refGroundImage: groundDetails.refGroundImage,
-          refGroundLocation: groundDetails.refGroundLocation,
-          refGroundPincode: groundDetails.refGroundPincode,
-          refGroundState: groundDetails.refGroundState,
-          refDescription: groundDetails.refDescription,
-          IframeLink: groundDetails.IframeLink,
-          refStatus: groundDetails.refStatus,
-        };
+       const payload = {
+         refGroundId: groundDetails.refGroundId,
+         refGroundName: groundDetails.refGroundName,
+         isAddOnAvailable: groundDetails.isAddOnAvailable,
+         refFeaturesId: groundDetails.refFeaturesId,
+         refUserGuidelinesId: groundDetails.refUserGuidelinesId,
+         refFacilitiesId: groundDetails.refFacilitiesId,
+         refAdditionalTipsId: groundDetails.refAdditionalTipsId,
+         refSportsCategoryId: groundDetails.refSportsCategoryId,
+         refTournamentPrice: groundDetails.refTournamentPrice,
+         refGroundPrice: groundDetails.refGroundPrice,
+         refGroundImage: groundDetails.refGroundImage,
+         refGroundLocation: groundDetails.refGroundLocation,
+         refGroundPincode: groundDetails.refGroundPincode,
+         refGroundState: groundDetails.refGroundState,
+         refDescription: groundDetails.refDescription,
+         IframeLink: groundDetails.IframeLink,
+         refStatus: groundDetails.refStatus,
+         refAddOns: addOns.map((addon) => ({
+           ...(addon.id && { refAddOnsId: addon.id }),
+           name: addon.addOn,
+           price: addon.price,
+           isSubaddonsAvailable: !!addon.subAddOns?.length,
+           refSubAddOns:
+             addon.subAddOns?.map((sub) => ({
+               ...(sub.id && { refSubAddOnsId: sub.id }),
+               name: sub.subAddOn || sub.name, // <-- here
+               price: sub.price,
+               isItemsAvailable: !!sub.items?.length,
+               refItems:
+                 sub.items?.map((item: any) => ({
+                   ...(item.id && { refItemsId: item.id }),
+                   name: item.item, // <-- here
+                   price: item.price,
+                 })) || [],
+             })) || [],
+         })),
+       };
+
+
         console.log("payload", payload);
         const response = await updateGround(payload);
         if(response.success){
@@ -239,6 +290,8 @@ const [groundImg, setGroundImg] = useState<GroundImage | null>(null);
     }
   };
 
+  console.log(addOns)
+
   const handleInputChange = (field: keyof GroundResult, value: string) => {
     setGroundDetails((prev) => ({
       ...prev!,
@@ -254,6 +307,34 @@ const [groundImg, setGroundImg] = useState<GroundImage | null>(null);
       ...prev!,
       [field]: value,
     }));
+  };
+
+  const handleRemoveAddon = async (addon: any, indexToRemove: number) => {
+  try {
+    // If addon has an ID, call delete API
+    if (addon?.id) {
+      await handleDeleteAddOn(addon.id);
+    }
+
+    // Remove addon from the local state
+    const updatedAddOns = addon?.id
+      ? addOns.filter((a) => a.id !== addon.id)
+      : [...addOns].filter((_, index) => index !== indexToRemove);
+
+    setAddOns(updatedAddOns);
+  } catch (error) {
+    console.error("Failed to remove addon:", error);
+  }
+};
+
+
+  const handleDeleteAddOn = async (addonId: number) => {
+    try {
+      const response = await deleteAddon({refAddOnsId: addonId});
+      console.log("response", response);
+    } catch (error) {
+      console.error("Error deleting add-on:", error);
+    }
   };
 
   const handleRemoveDate = async (addonAvailabilityId: number) => {
@@ -324,9 +405,6 @@ const [groundImg, setGroundImg] = useState<GroundImage | null>(null);
       return updated;
     });
   };
-
-
-
 
   const [formDataImages, setFormdataImages] = useState<any>([]);
 
@@ -404,6 +482,7 @@ const customMap = async (event: any) => {
 // };
 
 const parseDDMMYYYY = (dateStr: string): Date => {
+  console.log(dateStr);
   const [day, month, year] = dateStr.split("-").map(Number);
   return new Date(year, month - 1, day);
 };
@@ -419,7 +498,7 @@ const parseDDMMYYYY = (dateStr: string): Date => {
       }}
       className="m-3"
     >
-      <h1 className="text-[20px] font-bold uppercase text-black">Ground</h1>
+      <h1 className="text-[20px] font-bold uppercase text-black">Edit Ground</h1>
       <TabView>
         <TabPanel header="Basic Details">
           <div
@@ -491,6 +570,24 @@ const parseDDMMYYYY = (dateStr: string): Date => {
                 onChange={(e) =>
                   handleInputChange("refGroundPrice", e.target.value)
                 }
+              />
+            </div>
+            <div className="flex-1">
+              <label
+                className="block mb-1 font-medium text-black"
+                htmlFor="refTournamentPrice"
+              >
+                Ground Tournment Price:
+              </label>
+              <InputText
+                id="refTournamentPrice"
+                className="w-full"
+                placeholder="Ground Price"
+                value={groundDetails?.refTournamentPrice || ""}
+                onChange={(e) =>
+                  handleInputChange("refTournamentPrice", e.target.value)
+                }
+                required
               />
             </div>
           </div>
@@ -600,9 +697,9 @@ const parseDDMMYYYY = (dateStr: string): Date => {
                 Ground Features:
               </label>
               <MultiSelect
-                value={groundDetails?.refFeaturesIds || []}
+                value={groundDetails?.refFeaturesId || []}
                 onChange={(e) =>
-                  handleMultiSelectChange("refFeaturesIds", e.value)
+                  handleMultiSelectChange("refFeaturesId", e.value)
                 }
                 options={groundFeatures}
                 optionLabel="label"
@@ -622,9 +719,9 @@ const parseDDMMYYYY = (dateStr: string): Date => {
                 Sport Category:
               </label>
               <MultiSelect
-                value={groundDetails?.refSportsCategoryIds || []}
+                value={groundDetails?.refSportsCategoryId || []}
                 onChange={(e) =>
-                  handleMultiSelectChange("refSportsCategoryIds", e.value)
+                  handleMultiSelectChange("refSportsCategoryId", e.value)
                 }
                 options={sportOptions}
                 optionLabel="label"
@@ -646,9 +743,9 @@ const parseDDMMYYYY = (dateStr: string): Date => {
                 Guide Lines:
               </label>
               <MultiSelect
-                value={groundDetails?.refUserGuidelinesIds || []}
+                value={groundDetails?.refUserGuidelinesId || []}
                 onChange={(e) =>
-                  handleMultiSelectChange("refUserGuidelinesIds", e.value)
+                  handleMultiSelectChange("refUserGuidelinesId", e.value)
                 }
                 options={userGuidelines}
                 optionLabel="label"
@@ -668,9 +765,9 @@ const parseDDMMYYYY = (dateStr: string): Date => {
                 Facilities:
               </label>
               <MultiSelect
-                value={groundDetails?.refFacilitiesIds || []}
+                value={groundDetails?.refFacilitiesId || []}
                 onChange={(e) =>
-                  handleMultiSelectChange("refFacilitiesIds", e.value)
+                  handleMultiSelectChange("refFacilitiesId", e.value)
                 }
                 options={facilities}
                 optionLabel="label"
@@ -691,9 +788,9 @@ const parseDDMMYYYY = (dateStr: string): Date => {
                 Additional Tips:
               </label>
               <MultiSelect
-                value={groundDetails?.refAdditionalTipsIds || []}
+                value={groundDetails?.refAdditionalTipsId || []}
                 onChange={(e) =>
-                  handleMultiSelectChange("refAdditionalTipsIds", e.value)
+                  handleMultiSelectChange("refAdditionalTipsId", e.value)
                 }
                 options={additionalTips}
                 optionLabel="label"
@@ -705,21 +802,17 @@ const parseDDMMYYYY = (dateStr: string): Date => {
               />
             </div>
           </div>
-
-          <div className="card flex justify-content-center mt-3">
-            <Button label="Update" />
-          </div>
         </TabPanel>
 
         <TabPanel header="Additional Details">
           <div className="flex items-center justify-between mt-3">
             <span className="block mb-1 font-medium text-black">Add-Ons:</span>
-            {/* <Button
+            <Button
               type="button"
               label="Create New AddOn"
-              onClick={(e) => op.current?.toggle(e)}
+              onClick={() => handleAddNew()}
             />
-            <OverlayPanel ref={op}>
+            {/* <OverlayPanel ref={op}>
               <div className="flex-1 gap-2 flex flex-col">
                 <label
                   className="block mb-1 font-medium text-black"
@@ -734,7 +827,7 @@ const parseDDMMYYYY = (dateStr: string): Date => {
                   value={newAddOnName}
                   onChange={(e) => setNewAddOnName(e.target.value)}
                 />
-                <Button type="button" label="Add" onClick={handleAddNewAddon}/>
+                <Button type="button" label="Add" />
               </div>
             </OverlayPanel> */}
           </div>
@@ -744,61 +837,77 @@ const parseDDMMYYYY = (dateStr: string): Date => {
           <div className="flex flex-col gap-4">
             {addOns.map((addon, addonIndex) => {
               const selectedEntry = selectedAddonDates.find(
-                (entry) => entry.refAddonId === addon.refAddonId
+                (entry) => entry.refAddonId === addon.id
               );
-              const disabledDates = addon.data
-                .map((item: any) => {
-                  if (!item.unAvailabilityDate) return null;
-
-                  const parsedDate = parseDDMMYYYY(item.unAvailabilityDate);
+console.log(addon);
+              // Convert unAvailabilityDate strings to Date objects
+              const disabledDates = addon.unAvailabilityDates
+                .map((entry) => {
+                  const parsedDate = parseDDMMYYYY(entry.unAvailabilityDate);
                   return isNaN(parsedDate.getTime()) ? null : parsedDate;
                 })
-                .filter((date) => date !== null);
+                .filter((date): date is Date => date !== null);
 
               return (
-                <Panel key={addonIndex} header={addon.refAddOnName} toggleable>
-                  {/* <p className="m-0 mb-2">Add-on ID: {addon.refAddonId}</p> */}
+                <Panel key={addonIndex} header={addon.addOn} toggleable>
+                  <div className="flex flex-col gap-2 mt-2 justify-between">
+                    <div className="flex justify-between">
+                      <Button
+                        type="button"
+                        className="p-0 mr-2"
+                        label="Edit"
+                        onClick={() => handleEditAddon(addon, addonIndex)}
+                      />
+                      <Button
+                        type="button"
+                        className="p-0"
+                        severity="danger"
+                        icon="pi pi-trash"
+                        onClick={() => handleRemoveAddon(addon, addonIndex)}
+                      />
+                    </div>
 
-                  <div className="flex gap-2 mt-2 justify-between">
-                    <Calendar
-                      value={selectedEntry?.dates || []}
-                      onChange={(e) =>
-                        handleDateChange(
-                          addon.refAddonId,
-                          e.value as Date[] | null
-                        )
-                      }
-                      selectionMode="multiple"
-                      placeholder="Enter Your Unavailable Dates"
-                      disabledDates={disabledDates}
-                      minDate={new Date()}
-                      className="mb-2 w-full"
-                    />
+                    <div className="flex gap-2 items-center">
+                      <Calendar
+                        value={selectedEntry?.dates || []}
+                        onChange={(e) =>
+                          handleDateChange(addon.id, e.value as Date[] | null)
+                        }
+                        selectionMode="multiple"
+                        placeholder="Enter Your Unavailable Dates"
+                        disabledDates={disabledDates}
+                        minDate={new Date()}
+                        className="mb-2 w-full"
+                      />
 
-                    <Button
-                      type="button"
-                      label="Add"
-                      icon="pi pi-plus"
-                      onClick={() => handleAddDates(addon.refAddonId)}
-                      className="mb-3"
-                    />
+                      <Button
+                        type="button"
+                        label="Add"
+                        icon="pi pi-plus"
+                        onClick={() => handleAddDates(addon.id)}
+                        className="mb-3"
+                      />
+                    </div>
                   </div>
 
                   <div className="flex flex-wrap gap-2">
-                    {addon.data
+                    {addon.unAvailabilityDates
                       .slice()
                       .sort(
-                        (a: any, b: any) =>
+                        (a, b) =>
                           parseDDMMYYYY(a.unAvailabilityDate).getTime() -
                           parseDDMMYYYY(b.unAvailabilityDate).getTime()
                       )
-                      .map((item: any, dateIndex: number) => (
+                      .map((entry, dateIndex) => (
                         <Chip
-                          key={dateIndex}
-                          label={item.unAvailabilityDate}
+                          key={entry.addOnsAvailabilityId || dateIndex}
+                          label={entry.unAvailabilityDate}
                           removable
                           onRemove={() => {
-                            handleRemoveDate(item.addOnsAvailabilityId);
+                            console.log(addon);
+                            handleRemoveDate(
+                              entry.addOnsAvailabilityId
+                            ); // <-- optionally pass ID
                             return true;
                           }}
                         />
@@ -810,6 +919,93 @@ const parseDDMMYYYY = (dateStr: string): Date => {
           </div>
         </TabPanel>
       </TabView>
+      <div className="card flex justify-content-center mt-3">
+        <Button label="Update" />
+      </div>
+
+      <Sidebar
+        visible={newAddonSidebar}
+        onHide={() => setNewAddonSidebar(false)}
+        position="right"
+        style={{ width: "50%" }}
+      >
+        <CreateAddOns
+          selectedAddon={editingAddon}
+          onSave={(addonString: string) => {
+            try {
+              const parsed = JSON.parse(addonString);
+
+              // Normalize the AddOn structure
+              const normalizeAddon = (addon: any) => ({
+                ...addon,
+                price: typeof addon.price === "number" ? addon.price : 0,
+                addOn: addon.name,
+                unAvailabilityDates: Array.isArray(addon.unAvailabilityDates)
+                  ? addon.unAvailabilityDates
+                  : [],
+                subAddOns: (addon.refSubAddOns || []).map((sub: any) => ({
+                  ...sub,
+                  price: typeof sub.price === "number" ? sub.price : null,
+                  name: sub.name,
+                  refItems: (sub.refItems || []).map((item: any) => ({
+                    ...item,
+                    price: typeof item.price === "number" ? item.price : null,
+                    name: item.name,
+                  })),
+                })),
+              });
+
+              const addon = normalizeAddon(parsed);
+
+              const updatedAddons = [...addOns];
+
+              if (isEditing && editingIndex !== null) {
+                updatedAddons[editingIndex] = addon;
+              } else {
+                updatedAddons.push(addon);
+              }
+
+              setAddOns(updatedAddons);
+            } catch (error) {
+              console.error("Invalid AddOn JSON:", error);
+            }
+
+            setNewAddonSidebar(false);
+          }}
+        />
+      </Sidebar>
+
+      <Sidebar
+        visible={editAddonSidebar}
+        onHide={() => setEditAddonSidebar(false)}
+        position="right"
+        style={{ width: "50%" }}
+      >
+        <EditAddOns
+          selectedAddon={editingAddon}
+          onSave={(addonString: string) => {
+            const updatedAddon = JSON.parse(addonString); // Convert back to object
+            console.log("addon", updatedAddon);
+
+            if (editingIndex !== null) {
+              const updatedAddons = [...addOns];
+              const existingAddon = updatedAddons[editingIndex];
+
+              // Preserve unAvailabilityDates from the original addon
+              updatedAddons[editingIndex] = {
+                ...updatedAddon,
+                unAvailabilityDates: existingAddon.unAvailabilityDates || [],
+              };
+
+              console.log("updatedAddons", updatedAddons);
+              setAddOns(updatedAddons);
+            }
+
+            setEditAddonSidebar(false);
+          }}
+        />
+      </Sidebar>
+
       <Toast ref={toast} />
     </form>
   );

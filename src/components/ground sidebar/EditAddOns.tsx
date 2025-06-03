@@ -6,70 +6,103 @@ import { ToggleButton } from "primereact/togglebutton";
 import { Divider } from "primereact/divider";
 import { Toast } from "primereact/toast";
 
-interface CreateAddOnsProps {
-  selectedAddon: string | null; // Or full AddOnForm if needed
+interface EditAddOnsProps {
+  selectedAddon: string | null;
   onSave: (addon: string) => void;
 }
 
 interface NestedSubcategory {
-  name: string;
+  id: number | null;
+  item: string;
   price: number | null;
 }
 
 interface Subcategory {
-  name: string;
+  id: number | null;
+  subAddOn: string;
   price?: number | null;
   isItemsAvailable: boolean;
-  refItems?: NestedSubcategory[];
+  items?: NestedSubcategory[];
+  [key: string]: any;
 }
 
-interface AddOnForm {
-  name: string;
+interface EditAddOnForm {
+  id: number;
+  addOn: string;
   isSubaddonsAvailable: boolean;
   price?: number | null;
-  refSubAddOns?: Subcategory[];
+  subAddOns?: Subcategory[];
 }
 
-const CreateAddOns: React.FC<CreateAddOnsProps> = ({ selectedAddon, onSave }) => {
-  const [form, setForm] = useState<AddOnForm>({
-    name: "",
+const EditAddOns: React.FC<EditAddOnsProps> = ({ selectedAddon, onSave }) => {
+  const toast = useRef<Toast>(null);
+
+  const [form, setForm] = useState<EditAddOnForm>({
+    id: 0,
+    addOn: "",
     isSubaddonsAvailable: false,
     price: null,
-    refSubAddOns: [],
+    subAddOns: [],
   });
-
-const toast = useRef<Toast>(null);
 
   useEffect(() => {
     if (selectedAddon) {
-      // ✅ directly use the object
-      console.log(selectedAddon);
-      setForm(JSON.parse(selectedAddon));
+      const data = JSON.parse(selectedAddon);
+
+      const subAddons = (data.subAddOns || []).map((sub: any) => ({
+        ...sub,
+        isItemsAvailable: sub.items ? sub.items.length > 0 : (sub.refItems && sub.refItems.length > 0),
+      }));
+
+      const res: EditAddOnForm = {
+        id: data.id,
+        addOn: data.addOn,
+        isSubaddonsAvailable: subAddons.length > 0 ? true : (subAddons.length == undefined && false),
+        price: data.price,
+        subAddOns: subAddons,
+      };
+
+      setForm(res);
     }
   }, [selectedAddon]);
 
 
+  const handleSubmit = () => {
+    try {
+      validateForm();
+      const addonString = JSON.stringify(form);
+      onSave(addonString);
+    } catch (error: any) {
+      toast.current?.show({
+        severity: "error",
+        summary: "Error",
+        detail: error.message,
+      });
+      console.error(error.message);
+    }
+  };
+
   const validateForm = () => {
-    if (!form.name) {
+    if (!form.addOn) {
       throw new Error("Add-On Title and Price are required.");
     }
     if(!form.isSubaddonsAvailable && form.price === null) {
         throw new Error("Add-On Price is required.");
     }
     if (form.isSubaddonsAvailable) {
-        if (!form.refSubAddOns || form.refSubAddOns.length === 0) {
+        if (!form.subAddOns || form.subAddOns.length === 0) {
           throw new Error("Enter atleast one subcategory and price.");
         }
-      for (const sub of form.refSubAddOns || []) {
-        if (!sub.name) {
+      for (const sub of form.subAddOns || []) {
+        if (!sub.subAddOn && !sub.name) {
           throw new Error("Subcategory Title is required.");
         }
          if (!sub.isItemsAvailable && sub.price === null) {
-           throw new Error(`Subcategory "${sub.name}" Price is required.`);
+           throw new Error(`Subcategory "${sub.subAddOn}" Price is required.`);
          }
         if (sub.isItemsAvailable) {
-          for (const item of sub.refItems || []) {
-            if (!item.name || item.price === null) {
+          for (const item of sub.items || []) {
+            if (!item.item || item.price === null) {
               throw new Error("Item Name and Price are required.");
             }
           }
@@ -80,92 +113,68 @@ const toast = useRef<Toast>(null);
     }
   };
 
-  const handleSubmit = () => {
-    try {
-      validateForm();
-      const addonString = JSON.stringify(form); // Convert object to string
-    console.log(addonString);
-    onSave(addonString); // Send it back as a string
+  console.log(form);
 
-    } catch (error: any) {
-      toast.current?.show({ severity: "error", summary: "Error", detail: error.message });
-      console.error(error.message); // Display error message
-    }
-  };
-
-  const handleSubcategoryChange = (
-    index: number,
-    field: keyof Subcategory,
-    value: any
-  ) => {
-    const updated = [...(form.refSubAddOns || [])];
-
+  const handleSubcategoryChange = (index: number, field: keyof Subcategory, value: any) => {
+    const updated = [...(form.subAddOns || [])];
     if (field === "isItemsAvailable") {
       updated[index][field] = value;
-      if (value && !updated[index].refItems) {
-        updated[index].refItems = [{ name: "", price: null }];
+      if (value && !updated[index].items) {
+        updated[index].items = [{ id: 0, item: "", price: null }];
       }
       if (!value) {
-        delete updated[index].refItems;
+        delete updated[index].items;
       }
     } else {
       updated[index][field] = value;
     }
-    setForm({ ...form, refSubAddOns: updated });
+    setForm({ ...form, subAddOns: updated });
   };
 
-  const handleNestedChange = (
-    subIndex: number,
-    nestedIndex: number,
-    field: keyof NestedSubcategory,
-    value: any
-  ) => {
-    const updated = [...(form.refSubAddOns || [])];
-    const nested = updated[subIndex].refItems || [];
+  const handleNestedChange = (subIndex: number, nestedIndex: number, field: keyof NestedSubcategory, value: any) => {
+    const updated = [...(form.subAddOns || [])];
+    const nested = updated[subIndex].items || [];
     nested[nestedIndex] = { ...nested[nestedIndex], [field]: value };
-    updated[subIndex].refItems = nested;
-    setForm({ ...form, refSubAddOns: updated });
+    updated[subIndex].items = nested;
+    setForm({ ...form, subAddOns: updated });
   };
 
   const addSubcategory = () => {
     setForm({
       ...form,
-      refSubAddOns: [...(form.refSubAddOns || []), { name: "", isItemsAvailable: false, price: null, refItems: [] }],
+      subAddOns: [...(form.subAddOns || []), { id: null, subAddOn: "", isItemsAvailable: false, price: null, items: [] }],
     });
   };
 
   const removeSubcategory = (index: number) => {
-    const updated = [...(form.refSubAddOns || [])];
+    const updated = [...(form.subAddOns || [])];
     updated.splice(index, 1);
-    setForm({ ...form, refSubAddOns: updated });
+    setForm({ ...form, subAddOns: updated });
   };
 
   const addNestedSub = (subIndex: number) => {
-    const updated = [...(form.refSubAddOns || [])];
-    const nested = updated[subIndex].refItems || [];
-    nested.push({ name: "", price: null });
-    updated[subIndex].refItems = nested;
-    setForm({ ...form, refSubAddOns: updated });
+    const updated = [...(form.subAddOns || [])];
+    const nested = updated[subIndex].items || [];
+    nested.push({ id: null, item: "", price: null });
+    updated[subIndex].items = nested;
+    setForm({ ...form, subAddOns: updated });
   };
 
   const removeNestedSub = (subIndex: number, nestedIndex: number) => {
-    const updated = [...(form.refSubAddOns || [])];
-    updated[subIndex].refItems = updated[subIndex].refItems?.filter(
-      (_, i) => i !== nestedIndex
-    );
-    setForm({ ...form, refSubAddOns: updated });
+    const updated = [...(form.subAddOns || [])];
+    updated[subIndex].items = updated[subIndex].items?.filter((_, i) => i !== nestedIndex);
+    setForm({ ...form, subAddOns: updated });
   };
 
   return (
     <div className="p-1 max-w-3xl mx-auto bg-white rounded-lg shadow">
-      <h2 className="text-2xl font-bold text-black mb-4">Create Add-On</h2>
-
+      <h2 className="text-2xl font-bold text-black mb-4">Edit Add-On</h2>
       <div className="flex gap-3">
         <div className="w-8/12">
           <label className="block text-sm font-medium mb-1">Add-On Title</label>
           <InputText
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            value={form.addOn}
+            onChange={(e) => setForm({ ...form, addOn: e.target.value })}
             className="w-full p-inputtext-sm"
           />
         </div>
@@ -177,8 +186,8 @@ const toast = useRef<Toast>(null);
             onChange={(e) => setForm({ ...form, isSubaddonsAvailable: e.value })}
             onLabel="Yes"
             offLabel="No"
-            onIcon="pi pi-check" 
-            offIcon="pi pi-times" 
+            onIcon="pi pi-check"
+            offIcon="pi pi-times"
             className="w-[80px] text-xs"
           />
         </div>
@@ -188,47 +197,30 @@ const toast = useRef<Toast>(null);
 
       {form.isSubaddonsAvailable ? (
         <div className="space-y-4">
-          {form.refSubAddOns?.map((sub, index) => (
-            <div
-              key={index}
-              className="p-3 rounded-lg bg-gray-50 border border-gray-300"
-            >
+          {form.subAddOns?.map((sub, index) => (
+            <div key={index} className="p-3 rounded-lg bg-gray-50 border border-gray-300">
               <div className="flex items-center justify-between mb-2">
-                <span className="font-semibold text-base">
-                  Subcategory {index + 1}
-                </span>
-                <Button
-                  icon="pi pi-trash"
-                  severity="danger"
-                  text
-                  size="small"
-                  onClick={() => removeSubcategory(index)}
-                />
+                <span className="font-semibold text-base">Subcategory {index + 1}</span>
+                <Button icon="pi pi-trash" severity="danger" text size="small" onClick={() => removeSubcategory(index)} />
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
                 <InputText
-                  value={sub.name}
-                  onChange={(e) =>
-                    handleSubcategoryChange(index, "name", e.target.value)
-                  }
+                  value={sub.subAddOn ? sub.subAddOn : sub.name}
+                  onChange={(e) => handleSubcategoryChange(index, `${sub.subAddOn ? "subAddOn" : "name"}`, e.target.value)}
                   placeholder="Subcategory Title"
                   className="flex-grow min-w-[150px] p-inputtext-sm"
                 />
 
                 <div className="flex items-center gap-2 min-w-[100px]">
-                  <label className="text-xs whitespace-nowrap">
-                    Has Items?
-                  </label>
+                  <label className="text-xs whitespace-nowrap">Has Items?</label>
                   <ToggleButton
                     checked={sub.isItemsAvailable}
-                    onChange={(e) =>
-                      handleSubcategoryChange(index, "isItemsAvailable", e.value)
-                    }
+                    onChange={(e) => handleSubcategoryChange(index, "isItemsAvailable", e.value)}
                     onLabel="Yes"
                     offLabel="No"
-                    onIcon="pi pi-check" 
-                    offIcon="pi pi-times" 
+                    onIcon="pi pi-check"
+                    offIcon="pi pi-times"
                     className="w-[80px] text-xs"
                   />
                 </div>
@@ -238,9 +230,7 @@ const toast = useRef<Toast>(null);
                 {!sub.isItemsAvailable && (
                   <InputNumber
                     value={sub.price || null}
-                    onValueChange={(e) =>
-                      handleSubcategoryChange(index, "price", e.value)
-                    }
+                    onValueChange={(e) => handleSubcategoryChange(index, "price", e.value)}
                     placeholder="Price"
                     mode="currency"
                     currency="inr"
@@ -252,26 +242,17 @@ const toast = useRef<Toast>(null);
 
               {sub.isItemsAvailable && (
                 <div className="mt-3 space-y-2">
-                  {sub.refItems?.map((nested, nIndex) => (
+                  {sub.items?.map((nested, nIndex) => (
                     <div key={nIndex} className="flex items-center gap-2">
                       <InputText
-                        value={nested.name}
-                        onChange={(e) =>
-                          handleNestedChange(
-                            index,
-                            nIndex,
-                            "name",
-                            e.target.value
-                          )
-                        }
+                        value={nested.item}
+                        onChange={(e) => handleNestedChange(index, nIndex, "item", e.target.value)}
                         placeholder={`Item ${nIndex + 1}`}
                         className="min-w-[150px] p-inputtext-sm"
                       />
                       <InputNumber
                         value={nested.price}
-                        onValueChange={(e) =>
-                          handleNestedChange(index, nIndex, "price", e.value)
-                        }
+                        onValueChange={(e) => handleNestedChange(index, nIndex, "price", e.value)}
                         placeholder="Price"
                         mode="currency"
                         currency="inr"
@@ -287,26 +268,12 @@ const toast = useRef<Toast>(null);
                       />
                     </div>
                   ))}
-                  <Button
-                    label="Add Nested"
-                    icon="pi pi-plus"
-                    size="small"
-                    text
-                    onClick={() => addNestedSub(index)}
-                    className="text-primary"
-                  />
+                  <Button label="Add Nested" icon="pi pi-plus" size="small" text onClick={() => addNestedSub(index)} className="text-primary" />
                 </div>
               )}
             </div>
           ))}
-          <Button
-            label="Add Subcategory"
-            icon="pi pi-plus"
-            size="small"
-            text
-            onClick={addSubcategory}
-            className="text-primary"
-          />
+          <Button label="Add Subcategory" icon="pi pi-plus" size="small" text onClick={addSubcategory} className="text-primary" />
         </div>
       ) : (
         <div className="mb-4">
@@ -324,17 +291,10 @@ const toast = useRef<Toast>(null);
       )}
 
       <Divider className="my-5" />
-
-      <Button
-        label="Save Add-On"
-        icon="pi pi-save"
-        className="w-full p-button-sm"
-        onClick={handleSubmit}
-      />
-
+      <Button label="Save Add-On" icon="pi pi-save" className="w-full p-button-sm" onClick={handleSubmit} />
       <Toast ref={toast} />
     </div>
   );
 };
 
-export default CreateAddOns;
+export default EditAddOns;

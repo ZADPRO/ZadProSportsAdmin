@@ -147,7 +147,7 @@ const Ground: React.FC = () => {
       <DataTable
         scrollable
         showGridlines
-        stripedRows
+        paginator rows={5} rowsPerPageOptions={[5, 10, 25, 50]}
         value={getListGroundApi}
         tableStyle={{ margin: "10px" }}
       >

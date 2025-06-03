@@ -1,15 +1,23 @@
 import axios from "axios";
 import decrypt from "../../common/helper";
 
+export interface AddOnForm {
+  name: string;
+  isSubaddonsAvailable: boolean;
+  price?: number | null;
+  refSubAddOns?: object[];
+}
+
 export interface GroundAdd {
   refGroundName: string;
   isAddOnAvailable: boolean;
-  refAddOnsId: string[];
+  refAddOns: AddOnForm[];
   refFeaturesId: string[];
   refUserGuidelinesId: string[];
   refFacilitiesId: string[];
   refAdditionalTipsId: string[];
   refSportsCategoryId: string[];
+  refTournamentPrice: string;
   refGroundPrice: string;
   refGroundImage: string;
   refGroundLocation: string;
@@ -27,17 +35,19 @@ export interface GroundResult {
   isRoomAvailable: boolean;
   isAddOnAvailable: boolean;
   AddOn: number[];
+  addOns: [];
   refRoomImage: string;
-  refFeaturesId: string; // stored as PostgreSQL array string, e.g. "{1,2}"
+  refFeaturesId: number[]; // stored as PostgreSQL array string, e.g. "{1,2}"
   refFeaturesIds: number[];
-  refUserGuidelinesId: string;
+  refUserGuidelinesId: number[];
   refUserGuidelinesIds: number[];
-  refAdditionalTipsId: string;
+  refAdditionalTipsId: number[];
   refAdditionalTipsIds: number[];
-  refSportsCategoryId: string;
+  refSportsCategoryId: number[];
   refSportsCategoryIds: number[];
-  refFacilitiesId: string;
+  refFacilitiesId: number[];
   refFacilitiesIds: number[];
+  refTournamentPrice: string;
   refGroundPrice: string;
   refGroundImage: string;
   refGroundLocation: string;
@@ -57,12 +67,12 @@ export interface UpdateGround {
   refGroundId: number;
   refGroundName: string;
   isAddOnAvailable: boolean;
-  refAddOnsId: string[];
-  refFeaturesId: string[];     
-  refUserGuidelinesId: string[];
-  refFacilitiesId: string[];
-  refAdditionalTipsId: string[];
-  refSportsCategoryId: string[];
+  // refAddOnsId: string[];
+  refFeaturesId: number[];     
+  refUserGuidelinesId: number[];
+  refFacilitiesId: number[];
+  refAdditionalTipsId: number[];
+  refSportsCategoryId: number[];
   refGroundPrice: string;
   refGroundImage: string;
   refGroundLocation: string;
@@ -71,6 +81,7 @@ export interface UpdateGround {
   refDescription: string;
   IframeLink: string;
   refStatus: boolean;
+  refAddOns: []
 }
 
 
@@ -104,6 +115,17 @@ export interface AddOns {
   refAddOn: string;
 }
 
+
+export const decryptData = (response: any) => {
+  const decrypted = decrypt(
+    response.data[1],
+    response.data[0],
+    import.meta.env.VITE_ENCRYPTION_KEY
+  );
+  decrypted.token && localStorage.setItem("JWTtoken", decrypted.token);
+  return decrypted;
+}
+
 export const fetchGroundFeatures = async (): Promise<GroundFeaturesResult[]> => {
   const response = await axios.get(
     `${import.meta.env.VITE_API_URL}/settingRoutes/listFeatures`,
@@ -114,17 +136,11 @@ export const fetchGroundFeatures = async (): Promise<GroundFeaturesResult[]> => 
       },
     }
   );
-  const decrypted = decrypt(
-    response.data[1],
-    response.data[0],
-    import.meta.env.VITE_ENCRYPTION_KEY
-  );
-  localStorage.setItem("JWTtoken", decrypted.token);
-
+  const decrypted = decryptData(response);
   if (decrypted.success) {
     return decrypted.result;
   } else {
-    throw new Error("Failed to fetch sport categories");
+    throw new Error("Failed to fetch ground features");
   }
 };
 
@@ -142,12 +158,7 @@ export const fetchSportCategories = async (): Promise<
     }
   );
 
-  const decrypted = decrypt(
-    response.data[1],
-    response.data[0],
-    import.meta.env.VITE_ENCRYPTION_KEY
-  );
-  localStorage.setItem("JWTtoken", decrypted.token);
+  const decrypted = decryptData(response);
 
   if (decrypted.success) {
     return decrypted.result;
@@ -167,17 +178,12 @@ export const fetchUserGuidelines = async (): Promise<UserGuidlines[]> => {
     }
   );
 
-  const decrypted = decrypt(
-    response.data[1],
-    response.data[0],
-    import.meta.env.VITE_ENCRYPTION_KEY
-  );
-  localStorage.setItem("JWTtoken", decrypted.token);
+  const decrypted = decryptData(response);
 
   if (decrypted.success) {
     return decrypted.result;
   } else {
-    throw new Error("Failed to fetch sport categories");
+    throw new Error("Failed to fetch user guidelines");
   }
 };
 
@@ -192,17 +198,12 @@ export const fetchGoundFacilities = async (): Promise<FacilityResult[]> => {
       },
     }
   );
-  const decrypted = decrypt(
-    response.data[1],
-    response.data[0],
-    import.meta.env.VITE_ENCRYPTION_KEY
-  );
-  localStorage.setItem("JWTtoken", decrypted.token);
+  const decrypted = decryptData(response);
 
   if (decrypted.success) {
     return decrypted.result;
   } else {
-    throw new Error("Failed to fetch sport categories");
+    throw new Error("Failed to fetch facilities");
   }
 }
 
@@ -216,17 +217,12 @@ export const fetchAdditionalTips = async (): Promise<AdditionalTips[]> => {
       },
     }
   );
-  const decrypted = decrypt(
-    response.data[1],
-    response.data[0],
-    import.meta.env.VITE_ENCRYPTION_KEY
-  );
-  localStorage.setItem("JWTtoken", decrypted.token);
+  const decrypted = decryptData(response);
 
   if (decrypted.success) {
     return decrypted.result;
   } else {
-    throw new Error("Failed to fetch sport categories");
+    throw new Error("Failed to fetch additional tips");
   }
 }
 
@@ -241,12 +237,8 @@ export const fetchSpecificGround = async ( formData: any) => {
       },
     }
   );
-  const decrypted = decrypt(
-    response.data[1],
-    response.data[0],
-    import.meta.env.VITE_ENCRYPTION_KEY
-  );
-  localStorage.setItem("JWTtoken", decrypted.token);
+  const decrypted = decryptData(response);
+  
   console.log(decrypted)
   if (decrypted.success) {
     return decrypted;
@@ -263,17 +255,12 @@ export const fetchAddOns = async (): Promise<AddOns[]> => {
       },
     }
   );
-  const decrypted = decrypt(
-    response.data[1],
-    response.data[0],
-    import.meta.env.VITE_ENCRYPTION_KEY
-  );
-  localStorage.setItem("JWTtoken", decrypted.token);
+  const decrypted = decryptData(response);  
 
   if (decrypted.success) {
     return decrypted.result;
   } else {
-    throw new Error("Failed to fetch sport categories");
+    throw new Error("Failed to fetch addons");
   }
 }
 
@@ -287,17 +274,12 @@ export const fetchAddOnAvailability = async () => {
       },
     }
   );
-  const decrypted = decrypt(
-    response.data[1],
-    response.data[0],
-    import.meta.env.VITE_ENCRYPTION_KEY
-  );
-  localStorage.setItem("JWTtoken", decrypted.token);
+  const decrypted = decryptData(response);
 
   if (decrypted.success) {
     return decrypted.result;
   } else {
-    throw new Error("Failed to fetch sport categories");
+    throw new Error("Failed to fetch addon unavailability dates");
   }
 }
 
@@ -312,23 +294,16 @@ export const createNewGround = async (formData: GroundAdd) => {
       },
     }
   );
-  const decrypted = decrypt(
-    response.data[1],
-    response.data[0],
-    import.meta.env.VITE_ENCRYPTION_KEY
-  );
-  localStorage.setItem("JWTtoken", decrypted.token);
-
-  console.log(decrypted);
+  const decrypted = decryptData(response);
 
   if (decrypted.success) {
     return decrypted;
   } else {
-    throw new Error("Failed to remove sport categories");
+    throw new Error("Failed to create new ground");
   }
 }
 
-export const updateGround = async (formData: UpdateGround) => {
+export const updateGround = async (formData: any) => {
   const response = await axios.post(
     `${import.meta.env.VITE_API_URL}/groundRoutes/updateGround`,
     formData,
@@ -339,19 +314,14 @@ export const updateGround = async (formData: UpdateGround) => {
       },
     }
   );
-  const decrypted = decrypt(
-    response.data[1],
-    response.data[0],
-    import.meta.env.VITE_ENCRYPTION_KEY
-  );
-  localStorage.setItem("JWTtoken", decrypted.token);
+  const decrypted = decryptData(response);
 
   console.log(decrypted);
 
   if (decrypted.success) {
     return decrypted;
   } else {
-    throw new Error("Failed to remove sport categories");
+    throw new Error("Failed to update ground");
   }
 }
 
@@ -366,17 +336,12 @@ export const addAddOnsAvailability = async (formData: any) => {
       },
     }
   );
-  const decrypted = decrypt(
-    response.data[1],
-    response.data[0],
-    import.meta.env.VITE_ENCRYPTION_KEY
-  );
-  localStorage.setItem("JWTtoken", decrypted.token);
+  const decrypted = decryptData(response);
 
   if (decrypted.success) {
     return decrypted;
   } else {
-    throw new Error("Failed to fetch sport categories");
+    throw new Error("Failed to add addon unavailability date");
   }
   
 }
@@ -392,17 +357,12 @@ export const removerAddonAvailability = async (formData: any) => {
       },
     }
   );
-  const decrypted = decrypt(
-    response.data[1],
-    response.data[0],
-    import.meta.env.VITE_ENCRYPTION_KEY
-  );
-  localStorage.setItem("JWTtoken", decrypted.token);
+  const decrypted = decryptData(response);
 
   if (decrypted.success) {
     return decrypted;
   } else {
-    throw new Error("Failed to remove sport categories");
+    throw new Error("Failed to remove unavailability date");
   }
 }
 
@@ -417,12 +377,8 @@ export const uploadGroundImage = async (formData: any) => {
       },
     }
   );
-  const decrypted = decrypt(
-    response.data[1],
-    response.data[0],
-    import.meta.env.VITE_ENCRYPTION_KEY
-  );
-  localStorage.setItem("JWTtoken", decrypted.token);
+  const decrypted = decryptData(response);
+  
   console.log(decrypted)
   if (decrypted.success) {
     return decrypted;
@@ -442,10 +398,27 @@ export const createNewAddons = async (formData: any) => {
       },
     }
   );
-  const decrypted = decrypt(
-    response.data[1],
-    response.data[0],
-    import.meta.env.VITE_ENCRYPTION_KEY
-  );
-  localStorage.setItem("JWTtoken", decrypted.token);
+  const decrypted = decryptData(response);
+  return decrypted;
+  
 }
+
+export const deleteAddon = async (formData: any) => {
+  const response = await axios.post(
+    `${import.meta.env.VITE_API_URL}/groundRoutes/deleteAddons`,
+    formData,
+    {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("JWTtoken"),
+        "Content-Type": "Application/json",
+      },
+    }
+  );
+  const decrypted = decryptData(response);
+  console.log(decrypted)
+  if (decrypted.success) {
+    return decrypted;
+  } else {
+    throw new Error("Failed to update details");
+  }
+};

@@ -6,7 +6,7 @@ import { Button } from "primereact/button";
 // import SportCategory from "./SportCategory";
 import Features from "./Features";
 import UserGuidelines from "./UserGuidlines";
-import Facilities from "./Feacilities";
+import Facilities from "./Facilities";
 import AdditionalTips from "./AdditionalTips";
 // import FoodAndSnacks from "./FoodandSnacks";
 
