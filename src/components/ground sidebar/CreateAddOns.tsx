@@ -93,26 +93,28 @@ const toast = useRef<Toast>(null);
     }
   };
 
-  const handleSubcategoryChange = (
-    index: number,
-    field: keyof Subcategory,
-    value: any
-  ) => {
-    const updated = [...(form.refSubAddOns || [])];
+  const handleSubcategoryChange = <K extends keyof Subcategory>(
+  index: number,
+  field: K,
+  value: Subcategory[K]
+) => {
+  const updated = [...(form.refSubAddOns || [])];
 
-    if (field === "isItemsAvailable") {
-      updated[index][field] = value;
-      if (value && !updated[index].refItems) {
-        updated[index].refItems = [{ name: "", price: null }];
-      }
-      if (!value) {
-        delete updated[index].refItems;
-      }
-    } else {
-      updated[index][field] = value;
+  if (field === "isItemsAvailable") {
+    updated[index][field] = value;
+    if (value && !updated[index].refItems) {
+      updated[index].refItems = [{ name: "", price: null }];
     }
-    setForm({ ...form, refSubAddOns: updated });
-  };
+    if (!value) {
+      delete updated[index].refItems;
+    }
+  } else {
+    updated[index][field] = value;
+  }
+
+  setForm({ ...form, refSubAddOns: updated });
+};
+
 
   const handleNestedChange = (
     subIndex: number,
