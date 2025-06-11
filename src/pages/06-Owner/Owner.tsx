@@ -344,7 +344,7 @@ const Onwer: React.FC = () => {
       const response = await axios.get(
         import.meta.env.VITE_API_URL + "/ownerRoutes/listOwners",
         {
-           headers: {
+          headers: {
             Authorization: "Bearer " + localStorage.getItem("JWTtoken"),
             "Content-Type": "application/json",
           },
@@ -425,7 +425,6 @@ const Onwer: React.FC = () => {
   };
 
   const fetchOwnerDetails = async (OwnerId: string) => {
-    console.log("packageID ---->", OwnerId);
     setLoading(true);
     setError(null);
     console.log("local storage token", localStorage.getItem("JWTtoken"));
@@ -474,7 +473,7 @@ const Onwer: React.FC = () => {
           refUserId: UserId,
         },
         {
-           headers: {
+          headers: {
             Authorization: "Bearer " + localStorage.getItem("JWTtoken"),
             "Content-Type": "application/json",
           },
@@ -627,13 +626,14 @@ const Onwer: React.FC = () => {
         }}
       >
         <h1 className="font-bold text-3xl text-black mt-4">Owner </h1>
-        <Button label="Add New Ground" onClick={() => setVisible(true)} />
+        {/* <Button label="Add New Ground" onClick={() => setVisible(true)} /> */}
       </div>
       <DataTable
         scrollable
         showGridlines
         stripedRows
         value={display}
+        rows={10}
         tableStyle={{ margin: "10px" }}
       >
         <Column

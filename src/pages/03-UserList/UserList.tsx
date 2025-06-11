@@ -49,36 +49,34 @@ const Userlist: React.FC = () => {
   }, []);
   return (
     <div>
-
       {/* <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '1rem' }}>
      <Button label="Add New Groud" onClick={() => setVisibleRight(true)} />
 </div> */}
 
-<div className=" ml-3 mr-3">
-  <h1 className="font-bold text-3xl text-black mt-4">Signed Up Users List</h1>
-      <DataTable
-        scrollable
-        showGridlines
-        stripedRows
-        value={getListUserApi}
-        tableStyle={{ marginTop: "2.5rem", padding: "1px" }}
-      >
-        <Column
-          field="sno"
-          header="S.No"
-          body={(_, { rowIndex }) => rowIndex + 1}
-        />
-        <Column 
-        field="refCustId" 
-        header="User Id"
-        ></Column>
-        <Column field="refUserFname" header="First name"></Column>
-        <Column field="refUserLname" header="Last name"></Column>
-        <Column field="refMobileNumber" header="Mobile Number"></Column>
-        <Column field="refEmail" header="Email"></Column>
-        <Column field="refDoB" header="Date of Birth"></Column>
-      </DataTable>
-</div>
+      <div className=" ml-3 mr-3">
+        <h1 className="font-bold text-3xl text-black mt-4">
+          Signed Up Users List
+        </h1>
+        <DataTable
+          scrollable
+          showGridlines
+          stripedRows
+          value={getListUserApi}
+          tableStyle={{ marginTop: "2.5rem", padding: "1px" }}
+        >
+          <Column
+            field="sno"
+            header="S.No"
+            body={(_, { rowIndex }) => rowIndex + 1}
+          />
+          <Column field="refCustId" header="User Id"></Column>
+          <Column field="refUserFname" header="First name"></Column>
+          <Column field="refUserLname" header="Last name"></Column>
+          <Column field="refMobileNumber" header="Mobile Number"></Column>
+          <Column field="refEmail" header="Email"></Column>
+          <Column field="refDoB" header="Date of Birth"></Column>
+        </DataTable>
+      </div>
       {/* <Sidebar
         visible={visibleRight}
         position="right"

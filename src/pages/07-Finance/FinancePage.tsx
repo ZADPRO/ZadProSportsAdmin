@@ -175,6 +175,35 @@ const FinancePage: React.FC = () => {
       .finally(() => setLoading(false));
   };
 
+  const handleDeleteClick = (payoutId: number) => {
+    axios
+      .post(
+        `${import.meta.env.VITE_API_URL}/financeRoutes/deletePayouts`,
+        { payoutId },
+        {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("JWTtoken"),
+            "Content-Type": "application/json",
+          },
+        }
+      )
+      .then((response) => {
+        const data = decrypt(
+          response.data[1],
+          response.data[0],
+          import.meta.env.VITE_ENCRYPTION_KEY
+        );
+        localStorage.setItem("JWTtoken", data.token);
+
+        if (data.success) {
+          listPayoutsApi();
+        }
+      })
+      .catch((error) => {
+        console.error("Error deleting payout entry:", error);
+      });
+  };
+
   useEffect(() => {
     listBookingsApi();
     listPayoutsApi();
@@ -254,7 +283,7 @@ const FinancePage: React.FC = () => {
                 header="Receivable Amount"
                 style={{ minWidth: "12rem" }}
               />
-              <Column
+              {/* <Column
                 header="Delete"
                 body={() => (
                   <button
@@ -265,7 +294,7 @@ const FinancePage: React.FC = () => {
                   </button>
                 )}
                 style={{ minWidth: "8rem" }}
-              />
+              /> */}
             </DataTable>
           </div>
         </TabPanel>
@@ -464,10 +493,11 @@ const FinancePage: React.FC = () => {
 
               <Column
                 header="Delete"
-                body={() => (
+                body={(rowData) => (
                   <button
                     className="bg-red-100 text-red-600 hover:bg-red-200 p-2 rounded-full"
                     title="Delete"
+                    onClick={() => handleDeleteClick(rowData.payoutId)}
                   >
                     <Trash2 size={18} color="#dc2626" />
                   </button>

@@ -20,6 +20,7 @@ import ProtectedRoute from "../components/ProtectedRoute";
 import Dashboard from "../pages/00-Dashboard/Dashboard";
 import Onwer from "../pages/06-Owner/Owner";
 import FinancePage from "../pages/07-Finance/FinancePage";
+import Auditpage from "../pages/08-Audit/Audit";
 
 const MainRoutes: React.FC = () => {
   return (
@@ -65,6 +66,15 @@ const MainRoutes: React.FC = () => {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/audit"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <Auditpage />
+                </ProtectedRoute>
+              }
+            />
+            
             <Route
               path="/booking"
               element={

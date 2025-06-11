@@ -28,7 +28,7 @@ const employeeRoutes = [
     path: "/dashboard",
     name: "Dashboard",
     icon: <Home />,
-    allowedRoles: ["owner"],
+    allowedRoles: ["admin"],
   },
   {
     path: "/ground",

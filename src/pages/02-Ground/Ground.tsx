@@ -5,9 +5,9 @@ import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Button } from "primereact/button";
 import { Sidebar } from "primereact/sidebar";
-import GroundSidebar from "../../components/ground sidebar/GroundSidebar";
+// import GroundSidebar from "../../components/ground sidebar/GroundSidebar";
 import { Trash2 } from "lucide-react";
-import EditGroundSidebar from "../../components/ground sidebar/EditGroundSidebar";
+// import EditGroundSidebar from "../../components/ground sidebar/EditGroundSidebar";
 import { Toast } from "primereact/toast";
 
 interface GroundResult {
@@ -48,6 +48,11 @@ const Ground: React.FC = () => {
     index: null,
   });
 
+  const [_loading, setLoading] = useState(false);
+  const [_error, setError] = useState<string | null>(null);
+  const [groundupdateID, setgroundupdateID] = useState("");
+  const [groundupdatesidebar, setGroundupdatesidebar] = useState(false);
+
   const toast = useRef<Toast>(null);
 
   const listGroundApi = () => {
@@ -73,12 +78,90 @@ const Ground: React.FC = () => {
       });
   };
 
-  const handleClick = (index: number) => {
-    setSidebarForEditData({
-      visible: true,
-      index: index,
-    });
+  // const handleClick = (index: number) => {
+  //   setSidebarForEditData({
+  //     visible: true,
+  //     index: index,
+  //   });
+  // };
+
+  const handleClick = async (GroundId: string | number) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/groundRoutes/getGround`,
+        { refGroundId: GroundId },
+        {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("JWTtoken"),
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const data = decrypt(
+        response.data[1],
+        response.data[0],
+        import.meta.env.VITE_ENCRYPTION_KEY
+      );
+
+      localStorage.setItem("JWTtoken", data.token);
+
+      if (data.success) {
+        console.log("Fetched data:", data);
+        // Set any state from `data` if needed here
+
+        // ✅ Show the sidebar now
+        setGroundupdatesidebar(true);
+      } else {
+        setError("Failed to fetch ground details.");
+      }
+    } catch (err) {
+      setError("Error fetching ground details.");
+    } finally {
+      setLoading(false);
+    }
   };
+
+
+  // const handleClick = async (GroundId: string) => {
+  //   setLoading(true);
+  //   setError(null);
+  //   console.log("local storage token", localStorage.getItem("JWTtoken"));
+  //   try {
+  //     const response = await axios.post(
+  //       `${import.meta.env.VITE_API_URL}/groundRoutes/getGround`,
+  //       { refGroundId: GroundId },
+  //       {
+  //         headers: {
+  //           Authorization: "Bearer " + localStorage.getItem("JWTtoken"),
+  //           "Content-Type": "application/json",
+  //         },
+  //       }
+  //     );
+
+  //     const data = decrypt(
+  //       response.data[1],
+  //       response.data[0],
+  //       import.meta.env.VITE_ENCRYPTION_KEY
+  //     );
+
+  //     localStorage.setItem("JWTtoken", data.token);
+
+  //     if (data.success) {
+  //       localStorage.setItem("JWTtoken", data.token);
+  //       console.log("data", data);
+  //       // Handle success case if needed
+  //     } else {
+  //       setError("Failed to fetch package details.");
+  //     }
+  //   } catch (err) {
+  //     setError("Error fetching package details.");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   useEffect(() => {
     listGroundApi();
@@ -127,7 +210,34 @@ const Ground: React.FC = () => {
       });
   };
 
-  console.log(getListGroundApi);
+  const approveGround = async (
+    refGroundId: number | string,
+    currentStatus: "Approved" | "Rejected" | "Pending"
+  ) => {
+    const newStatus = currentStatus === "Approved" ? "Rejected" : "Approved";
+
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/adminRoutes/approveGround`,
+        { refGroundId, status: newStatus },
+        {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("JWTtoken"),
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.data.success) {
+        console.log(`Ground status changed to: ${newStatus}`);
+        listGroundApi(); // refresh the table data after update
+      } else {
+        console.error("API error:", response.data.message);
+      }
+    } catch (error) {
+      console.error("Request failed:", error);
+    }
+  };
 
   return (
     <div>
@@ -141,15 +251,15 @@ const Ground: React.FC = () => {
         }}
       >
         <h1 className="font-bold text-3xl text-black mt-4">Grounds</h1>
-        <Button label="Add New Ground" onClick={() => setVisibleRight(true)} />
+        {/* <Button label="Add New Ground" onClick={() => setVisibleRight(true)} /> */}
       </div>
 
       <DataTable
         scrollable
         showGridlines
         paginator
-        rows={5}
-        rowsPerPageOptions={[5, 10, 25, 50]}
+        rows={10}
+        // rowsPerPageOptions={[5, 10, 25, 50]}
         value={getListGroundApi}
         tableStyle={{ margin: "10px" }}
       >
@@ -158,10 +268,10 @@ const Ground: React.FC = () => {
           header="S.No"
           body={(_, { rowIndex }) => rowIndex + 1}
         />
-        <Column
+        {/* <Column
           field="refGroundName"
           header="Ground Name"
-          filter
+          // filter
           sortable
           frozen
           body={(rowData, options) => (
@@ -177,7 +287,59 @@ const Ground: React.FC = () => {
             </span>
           )}
           style={{ minWidth: "14rem" }}
+        ></Column> */}
+
+        <Column
+          className="underline text-[#0a5c9c] cursor-pointer"
+          field="refGroundName"
+          header="Ground Name"
+          sortable
+          frozen
+          body={(rowData) => {
+            const actualGroundId =
+              typeof rowData.refGroundId === "object"
+                ? rowData.refGroundId.refGroundId
+                : rowData.refGroundId;
+
+            return (
+              <div
+                onClick={() => {
+                  setgroundupdateID(actualGroundId);
+                  handleClick(actualGroundId); // This fetches data
+                  setVisibleRight(true); // This opens the sidebar
+                }}
+              >
+                {rowData.refGroundName}
+              </div>
+            );
+          }}
+          style={{ minWidth: "14rem" }}
         ></Column>
+
+        {/* <Column
+          className="underline text-[#0a5c9c] cursor-pointer"
+          field="refGroundName"
+          header="Ground Name"
+          sortable
+          frozen
+          body={(rowData) => {
+            console.log("rowData -->", rowData);
+            return (
+              <div
+                onClick={() => {
+                  console.log("rowData.refGroundId", rowData.refGroundId);
+                  setgroundupdateID(rowData.refGroundId);
+                  setGroundupdatesidebar(true);
+                  handleClick(rowData.refGroundId);
+                }}
+              >
+                {rowData.refGroundName}
+              </div>
+            );
+          }}
+          style={{ minWidth: "14rem" }}
+        ></Column> */}
+
         <Column
           field="refGroundCustId"
           header="Ground Cust Id"
@@ -194,31 +356,50 @@ const Ground: React.FC = () => {
           header="Ground Location"
           style={{ minWidth: "14rem" }}
         ></Column>
-        {/* <Column
-          field="refSportsCategoryName"
-          header="Sports Category"
-          style={{ minWidth: "14rem" }}
-        ></Column>
-        <Column
-          field="refFeaturesName"
-          header="Features"
-          style={{ minWidth: "18rem" }}
-        ></Column>
-        <Column
-          field="refUserGuidelinesName"
-          header="User Guidelines"
-          style={{ minWidth: "20rem" }}
-        ></Column>
-        <Column
-          field="refAdditionalTipsName"
-          header="Additional Tips"
-          style={{ minWidth: "20rem" }}
-        ></Column> */}
+
         <Column
           field="refDescription"
           header="Description"
           style={{ minWidth: "20rem" }}
         ></Column>
+        <Column
+          header="Action"
+          body={(rowData) => {
+            const currentStatus = rowData.approveGround ?? "Pending"; // default to "Pending"
+            const nextStatus =
+              currentStatus === "Approved" ? "Rejected" : "Approved";
+
+            // Button label color based on current status
+            const buttonClass =
+              currentStatus === "Approved"
+                ? "p-button-warning"
+                : currentStatus === "Rejected"
+                ? "p-button-success"
+                : "p-button-info";
+
+            const buttonLabel =
+              currentStatus === "Approved"
+                ? "Reject"
+                : currentStatus === "Rejected"
+                ? "Approve"
+                : "Approve";
+
+            return (
+              <div className="flex gap-2">
+                <button
+                  className={`p-button p-button-sm font-medium ${buttonClass}`}
+                  onClick={() =>
+                    approveGround(rowData.refGroundId, currentStatus)
+                  }
+                >
+                  {buttonLabel}
+                </button>
+              </div>
+            );
+          }}
+          style={{ minWidth: "10rem" }}
+        />
+
         <Column
           header="Delete"
           body={(rowData) => (
@@ -242,10 +423,12 @@ const Ground: React.FC = () => {
         onHide={() => setVisibleRight(false)}
         style={{ width: "60%" }}
       >
-        <GroundSidebar onSuccess={handleEditSuccess} />
+        {/* <GroundSidebar onSuccess={handleEditSuccess} /> */}
       </Sidebar>
 
-      <Sidebar
+   
+
+      {/* <Sidebar
         visible={sidebarForEditData.visible}
         onHide={() => setSidebarForEditData({ visible: false, index: null })}
         position="right"
@@ -259,6 +442,7 @@ const Ground: React.FC = () => {
             />
           )}
       </Sidebar>
+       */}
       <Toast ref={toast} />
     </div>
   );
