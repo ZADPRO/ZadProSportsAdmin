@@ -8,7 +8,7 @@ import "@react-pdf-viewer/default-layout/lib/styles/index.css";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 
-import pdfFile from "../../assets/MEDPREDIT COMMERCIAL APPLICATION.pdf"
+// import pdfFile from "../../assets/MEDPREDIT COMMERCIAL APPLICATION.pdf"
 
 interface EditSidebarProps {
   ownerData: string;

@@ -4,20 +4,17 @@ import React, { useState } from "react";
 import { Sidebar } from "primereact/sidebar";
 import { Button } from "primereact/button";
 import SportCategory from "./SportCategory";
-import Features from "./Features";
-import UserGuidelines from "./UserGuidlines";
-import Facilities from "./Facilities";
-import AdditionalTips from "./AdditionalTips";
+
 // import FoodAndSnacks from "./FoodandSnacks";
 
 const SettingsCard: React.FC = () => {
   const [sportvisibleRight, setsportvisibleRight] = useState<boolean>(false);
-  const [featuresvisibleRight, setFeaturesVisibleRight] =
-    useState<boolean>(false);
-  const [visibleRight, setVisibleRight] = useState<boolean>(false);
-  const [facilitiesvisibleRight, setFacilitiesVisibleRight] =
-    useState<boolean>(false);
-  const [tipsvisibleRight, setTipsVisibleRight] = useState<boolean>(false);
+  // const [featuresvisibleRight, setFeaturesVisibleRight] =
+  //   useState<boolean>(false);
+  // const [visibleRight, setVisibleRight] = useState<boolean>(false);
+  // const [facilitiesvisibleRight, setFacilitiesVisibleRight] =
+  //   useState<boolean>(false);
+  // const [tipsvisibleRight, setTipsVisibleRight] = useState<boolean>(false);
   // const [foodvisibleRight, setFoodVisibleRight] = useState<boolean>(false);
   // const [combovisibleRight, setComboVisibleRight] = useState<boolean>(false);
 

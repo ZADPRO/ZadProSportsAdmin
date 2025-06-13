@@ -467,91 +467,91 @@ const Onwer: React.FC = () => {
     }
   };
 
-  const approveOwner = async (UserId: number) => {
-    try {
-      console.log("Approving owner with ID:", UserId);
+  // const approveOwner = async (UserId: number) => {
+  //   try {
+  //     console.log("Approving owner with ID:", UserId);
 
-      const response = await axios.post(
-        import.meta.env.VITE_API_URL + "/ownerRoutes/approveOwners",
-        {
-          refUserId: UserId,
-        },
-        {
-          headers: {
-            Authorization: "Bearer " + localStorage.getItem("JWTtoken"),
-            "Content-Type": "application/json",
-          },
-        }
-      );
+  //     const response = await axios.post(
+  //       import.meta.env.VITE_API_URL + "/ownerRoutes/approveOwners",
+  //       {
+  //         refUserId: UserId,
+  //       },
+  //       {
+  //         headers: {
+  //           Authorization: "Bearer " + localStorage.getItem("JWTtoken"),
+  //           "Content-Type": "application/json",
+  //         },
+  //       }
+  //     );
 
-      const data = decrypt(
-        response.data[1],
-        response.data[0],
-        import.meta.env.VITE_ENCRYPTION_KEY
-      );
+  //     const data = decrypt(
+  //       response.data[1],
+  //       response.data[0],
+  //       import.meta.env.VITE_ENCRYPTION_KEY
+  //     );
 
-      console.log("Approval response:", data);
+  //     console.log("Approval response:", data);
 
-      if (data.success) {
-        localStorage.setItem("JWTtoken", data.token);
+  //     if (data.success) {
+  //       localStorage.setItem("JWTtoken", data.token);
 
-        toast.current?.show({
-          severity: "success",
-          summary: "Success",
-          detail: "Owner approved successfully!",
-          life: 3000,
-        });
+  //       toast.current?.show({
+  //         severity: "success",
+  //         summary: "Success",
+  //         detail: "Owner approved successfully!",
+  //         life: 3000,
+  //       });
 
-        const updated = display.map((owner) =>
-          parseInt(owner.refuserId) === UserId
-            ? { ...owner, refStatus: "Approved" }
-            : owner
-        );
-        setDisplay(updated);
-      } else {
-        console.error("API update failed:", data);
-        toast.current?.show({
-          severity: "error",
-          summary: "Error",
-          detail: data.error || "Failed to approve owner",
-          life: 3000,
-        });
-      }
-    } catch (e) {
-      console.error("Error approving owner:", e);
-      toast.current?.show({
-        severity: "error",
-        summary: "Error",
-        detail: "Error approving owner",
-        life: 3000,
-      });
-    }
-  };
+  //       const updated = display.map((owner) =>
+  //         parseInt(owner.refuserId) === UserId
+  //           ? { ...owner, refStatus: "Approved" }
+  //           : owner
+  //       );
+  //       setDisplay(updated);
+  //     } else {
+  //       console.error("API update failed:", data);
+  //       toast.current?.show({
+  //         severity: "error",
+  //         summary: "Error",
+  //         detail: data.error || "Failed to approve owner",
+  //         life: 3000,
+  //       });
+  //     }
+  //   } catch (e) {
+  //     console.error("Error approving owner:", e);
+  //     toast.current?.show({
+  //       severity: "error",
+  //       summary: "Error",
+  //       detail: "Error approving owner",
+  //       life: 3000,
+  //     });
+  //   }
+  // };
 
-  const actionRead = (rowData: any) => {
-    const isApproved = rowData.refStatus === "Approved";
+  // const actionRead = (rowData: any) => {
+  //   const isApproved = rowData.refStatus === "Approved";
 
-    return (
-      <div className="flex items-center gap-2">
-        <button
-          className={`${
-            isApproved
-              ? "bg-[#1da750] cursor-not-allowed"
-              : "bg-[#ffcb28] hover:bg-[#ffc928b9] cursor-pointer"
-          } text-white py-1 px-2 rounded transition-colors`}
-          onClick={() => {
-            if (!isApproved) {
-              console.log("Approving owner:", rowData.refOwnerId);
-              approveOwner(parseInt(rowData.refOwnerId));
-            }
-          }}
-          disabled={isApproved}
-        >
-          {isApproved ? "Approved" : "Approve"}
-        </button>
-      </div>
-    );
-  };
+  //   return (
+  //     <div className="flex items-center gap-2">
+  //       <button
+  //         className={`${
+  //           isApproved
+  //             ? "bg-[#1da750] cursor-not-allowed"
+  //             : "bg-[#ffcb28] hover:bg-[#ffc928b9] cursor-pointer"
+  //         } text-white py-1 px-2 rounded transition-colors`}
+  //         onClick={() => {
+  //           if (!isApproved) {
+  //             console.log("Approving owner:", rowData.refOwnerId);
+  //             approveOwner(parseInt(rowData.refOwnerId));
+  //           }
+  //         }}
+  //         disabled={isApproved}
+  //       >
+  //         {isApproved ? "Approved" : "Approve"}
+  //       </button>
+  //     </div>
+  //   );
+  // };
 
   const listSportApi = () => {
     axios

@@ -36,7 +36,7 @@ interface GroundResult {
   refAdditionalTipsName: string[];
   refSportsCategoryName: string[];
   approveGround: string;
-  refOwnerFname:string;
+  refOwnerFname: string;
 }
 
 const Ground: React.FC = () => {
@@ -44,7 +44,7 @@ const Ground: React.FC = () => {
     []
   );
   const [visibleRight, setVisibleRight] = useState<boolean>(false);
-  const [sidebarForEditData, setSidebarForEditData] = useState<{
+  const [_sidebarForEditData, _setSidebarForEditData] = useState<{
     visible: boolean;
     index: number | null;
   }>({
@@ -55,7 +55,7 @@ const Ground: React.FC = () => {
   const [_loading, setLoading] = useState(false);
   const [_error, setError] = useState<string | null>(null);
   const [groundupdateID, setgroundupdateID] = useState("");
-  const [groundupdatesidebar, setGroundupdatesidebar] = useState(false);
+  const [_groundupdatesidebar, setGroundupdatesidebar] = useState(false);
 
   const toast = useRef<Toast>(null);
 
@@ -170,11 +170,11 @@ const Ground: React.FC = () => {
     listGroundApi();
   }, []);
 
-  const handleEditSuccess = () => {
-    setSidebarForEditData({ visible: false, index: null }); // close sidebar
-    setVisibleRight(false); // close modal)
-    listGroundApi(); // refetch or run any function
-  };
+  // const handleEditSuccess = () => {
+  //   setSidebarForEditData({ visible: false, index: null }); // close sidebar
+  //   setVisibleRight(false); // close modal)
+  //   listGroundApi(); // refetch or run any function
+  // };
 
   const deleteGround = (refGroundId: number) => {
     axios
@@ -391,24 +391,24 @@ const Ground: React.FC = () => {
         <Column
           header="Action"
           body={(rowData: GroundResult) => {
-            let bgColor = "";
-            let textColor = "";
+            // let bgColor = "";
+            // let textColor = "";
             let label = "";
 
             switch (rowData.approveGround) {
               case "Approved":
-                bgColor = "success";
-                textColor = "text-green-700";
+                // bgColor = "success";
+                // textColor = "text-[#22c55e]";
                 label = "Approved";
                 break;
               case "Rejected":
-                bgColor = "danger";
-                textColor = "text-red-700";
+                // bgColor = "danger";
+                // textColor = "text-[#e24c4c]";
                 label = "Rejected";
                 break;
               default:
-                bgColor = "warning";
-                textColor = "text-red-700";
+                // bgColor = "warning";
+                // textColor = "text-[#ef4444]";
                 label = "Pending";
                 break;
             }
@@ -432,7 +432,7 @@ const Ground: React.FC = () => {
           }}
           style={{ minWidth: "10rem" }}
         />
- 
+
         <Column
           header="Delete"
           body={(rowData) => (
