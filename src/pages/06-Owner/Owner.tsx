@@ -342,7 +342,8 @@ const Onwer: React.FC = () => {
   const Display = async () => {
     try {
       const response = await axios.get(
-        import.meta.env.VITE_API_URL + "/ownerRoutes/listOwners",
+        // import.meta.env.VITE_API_URL + "/ownerRoutes/listOwners"
+        `${import.meta.env.VITE_API_URL}/ownerRoutes/listOwners`,
         {
           headers: {
             Authorization: "Bearer " + localStorage.getItem("JWTtoken"),
@@ -356,11 +357,14 @@ const Onwer: React.FC = () => {
         response.data[0],
         import.meta.env.VITE_ENCRYPTION_KEY
       );
+      localStorage.setItem("JWTtoken", data.token);
 
       if (data.success) {
-        localStorage.setItem("JWTtoken", data.token);
+        // localStorage.setItem("JWTtoken", data.token);
         console.log("data -------------->", data);
         setDisplay(data.result);
+      } else {
+        console.log("error passed from backend", data.message);
       }
     } catch (e: any) {
       console.log("Error fetching :", e);
@@ -450,7 +454,7 @@ const Onwer: React.FC = () => {
       localStorage.setItem("JWTtoken", data.token);
 
       if (data.success) {
-        localStorage.setItem("JWTtoken", data.token);
+        // localStorage.setItem("JWTtoken", data.token);
         console.log("data", data);
         // Handle success case if needed
       } else {
@@ -646,6 +650,7 @@ const Onwer: React.FC = () => {
           headerStyle={{ width: "25rem" }}
           field="refOwnerCustId"
           header="Owner Id"
+          frozen
           style={{ minWidth: "20rem" }}
           body={(rowData) => {
             console.log("rowData -->", rowData);
@@ -671,7 +676,7 @@ const Onwer: React.FC = () => {
         <Column
           field="refOwnerLname"
           header="Last Name"
-          frozen
+          
           style={{ minWidth: "10rem" }}
         ></Column>
         <Column

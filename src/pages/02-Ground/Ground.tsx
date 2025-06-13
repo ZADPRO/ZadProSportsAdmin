@@ -3,12 +3,14 @@ import React, { useEffect, useRef, useState } from "react";
 import decrypt from "../../common/helper";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
-import { Button } from "primereact/button";
+// import { Button } from "primereact/button";
 import { Sidebar } from "primereact/sidebar";
 // import GroundSidebar from "../../components/ground sidebar/GroundSidebar";
 import { Trash2 } from "lucide-react";
 // import EditGroundSidebar from "../../components/ground sidebar/EditGroundSidebar";
 import { Toast } from "primereact/toast";
+import GroundView from "./GroundView";
+import { Button } from "primereact/button";
 
 interface GroundResult {
   refGroundId: number;
@@ -33,6 +35,8 @@ interface GroundResult {
   refUserGuidelinesName: string[];
   refAdditionalTipsName: string[];
   refSportsCategoryName: string[];
+  approveGround: string;
+  refOwnerFname:string;
 }
 
 const Ground: React.FC = () => {
@@ -72,7 +76,7 @@ const Ground: React.FC = () => {
         localStorage.setItem("JWTtoken", data.token);
 
         if (data.success) {
-          // console.log(data);
+          console.log(data);
           setGetListGroundApi(data.result);
         }
       });
@@ -123,7 +127,6 @@ const Ground: React.FC = () => {
       setLoading(false);
     }
   };
-
 
   // const handleClick = async (GroundId: string) => {
   //   setLoading(true);
@@ -210,14 +213,53 @@ const Ground: React.FC = () => {
       });
   };
 
+  // const approveGround = async (
+  //   refGroundId: number | string,
+  //   currentStatus: "Approved" | "Rejected" | null
+  // ) => {
+  //   let newStatus: "Approved" | "Rejected";
+
+  //   if (currentStatus === "Approved") {
+  //     newStatus = "Rejected";
+  //   } else {
+  //     newStatus = "Approved"; // handles "Rejected" or null (i.e., Pending)
+  //   }
+
+  //   try {
+  //     const response = await axios.post(
+  //       `${import.meta.env.VITE_API_URL}/adminRoutes/approveGround`,
+  //       { refGroundId, status: newStatus },
+  //       {
+  //         headers: {
+  //           Authorization: "Bearer " + localStorage.getItem("JWTtoken"),
+  //           "Content-Type": "application/json",
+  //         },
+  //       }
+  //     );
+  //     console.log('response', response)
+
+  //     console.log('line ------ 240', )
+  //     if (response.data.success) {
+  //       console.log(`Ground status changed to: ${newStatus}`);
+  //       listGroundApi(); // refresh table
+
+  //       console.log('line ----- 243', )
+  //     } else {
+  //       console.error("API error:", response.data.message);
+  //     }
+  //   } catch (error) {
+  //     console.error("Request failed:", error);
+  //   }
+  // };
   const approveGround = async (
     refGroundId: number | string,
-    currentStatus: "Approved" | "Rejected" | "Pending"
+    currentStatus: "Approved" | "Rejected" | null
   ) => {
-    const newStatus = currentStatus === "Approved" ? "Rejected" : "Approved";
+    let newStatus: "Approved" | "Rejected" =
+      currentStatus === "Approved" ? "Rejected" : "Approved";
 
-    try {
-      const response = await axios.post(
+    axios
+      .post(
         `${import.meta.env.VITE_API_URL}/adminRoutes/approveGround`,
         { refGroundId, status: newStatus },
         {
@@ -226,22 +268,44 @@ const Ground: React.FC = () => {
             "Content-Type": "application/json",
           },
         }
-      );
+      )
+      .then((response) => {
+        const data = decrypt(
+          response.data[1],
+          response.data[0],
+          import.meta.env.VITE_ENCRYPTION_KEY
+        );
+        localStorage.setItem("JWTtoken", data.token);
 
-      if (response.data.success) {
-        console.log(`Ground status changed to: ${newStatus}`);
-        listGroundApi(); // refresh the table data after update
-      } else {
-        console.error("API error:", response.data.message);
-      }
-    } catch (error) {
-      console.error("Request failed:", error);
+        if (data.success) {
+          console.log(`Ground status changed to: ${newStatus}`);
+          listGroundApi(); // Refresh the table
+        } else {
+          console.error("API error:", data.message);
+        }
+      })
+      .catch((error) => {
+        console.error("Request failed:", error);
+      });
+  };
+
+  const getSeverity = (status: string | null) => {
+    switch (status) {
+      case "Approved":
+        return "success"; // green
+      case "Rejected":
+        return "danger"; // red
+      case "Pending":
+      default:
+        return "warning"; // yellow
     }
   };
 
+  const onSuccess = () => {
+    setGroundupdatesidebar(false);
+  };
   return (
     <div>
-      {/* <Button label="Add New Groud" onClick={() => setVisibleRight(true)} /> */}
       <div
         style={{
           display: "flex",
@@ -251,7 +315,6 @@ const Ground: React.FC = () => {
         }}
       >
         <h1 className="font-bold text-3xl text-black mt-4">Grounds</h1>
-        {/* <Button label="Add New Ground" onClick={() => setVisibleRight(true)} /> */}
       </div>
 
       <DataTable
@@ -268,26 +331,6 @@ const Ground: React.FC = () => {
           header="S.No"
           body={(_, { rowIndex }) => rowIndex + 1}
         />
-        {/* <Column
-          field="refGroundName"
-          header="Ground Name"
-          // filter
-          sortable
-          frozen
-          body={(rowData, options) => (
-            <span
-              onClick={() => handleClick(options.rowIndex)}
-              style={{
-                cursor: "pointer",
-                color: "#007ad9",
-                textDecoration: "underline",
-              }}
-            >
-              {rowData.refGroundName}
-            </span>
-          )}
-          style={{ minWidth: "14rem" }}
-        ></Column> */}
 
         <Column
           className="underline text-[#0a5c9c] cursor-pointer"
@@ -316,36 +359,19 @@ const Ground: React.FC = () => {
           style={{ minWidth: "14rem" }}
         ></Column>
 
-        {/* <Column
-          className="underline text-[#0a5c9c] cursor-pointer"
-          field="refGroundName"
-          header="Ground Name"
-          sortable
-          frozen
-          body={(rowData) => {
-            console.log("rowData -->", rowData);
-            return (
-              <div
-                onClick={() => {
-                  console.log("rowData.refGroundId", rowData.refGroundId);
-                  setgroundupdateID(rowData.refGroundId);
-                  setGroundupdatesidebar(true);
-                  handleClick(rowData.refGroundId);
-                }}
-              >
-                {rowData.refGroundName}
-              </div>
-            );
-          }}
-          style={{ minWidth: "14rem" }}
-        ></Column> */}
-
         <Column
           field="refGroundCustId"
           header="Ground Cust Id"
           frozen
           style={{ minWidth: "10rem" }}
         ></Column>
+        <Column
+          field="refOwnerFname"
+          header="Owner name"
+          frozen
+          style={{ minWidth: "10rem" }}
+        ></Column>
+
         <Column
           field="refGroundPrice"
           header="Ground Price"
@@ -364,42 +390,49 @@ const Ground: React.FC = () => {
         ></Column>
         <Column
           header="Action"
-          body={(rowData) => {
-            const currentStatus = rowData.approveGround ?? "Pending"; // default to "Pending"
-            const nextStatus =
-              currentStatus === "Approved" ? "Rejected" : "Approved";
+          body={(rowData: GroundResult) => {
+            let bgColor = "";
+            let textColor = "";
+            let label = "";
 
-            // Button label color based on current status
-            const buttonClass =
-              currentStatus === "Approved"
-                ? "p-button-warning"
-                : currentStatus === "Rejected"
-                ? "p-button-success"
-                : "p-button-info";
-
-            const buttonLabel =
-              currentStatus === "Approved"
-                ? "Reject"
-                : currentStatus === "Rejected"
-                ? "Approve"
-                : "Approve";
+            switch (rowData.approveGround) {
+              case "Approved":
+                bgColor = "success";
+                textColor = "text-green-700";
+                label = "Approved";
+                break;
+              case "Rejected":
+                bgColor = "danger";
+                textColor = "text-red-700";
+                label = "Rejected";
+                break;
+              default:
+                bgColor = "warning";
+                textColor = "text-red-700";
+                label = "Pending";
+                break;
+            }
 
             return (
               <div className="flex gap-2">
-                <button
-                  className={`p-button p-button-sm font-medium ${buttonClass}`}
+                <Button
+                  severity={getSeverity(rowData.approveGround)}
+                  className="px-4 py-2 rounded-md font-semibold transition duration-200 hover:brightness-110 shadow-sm border border-gray-200"
                   onClick={() =>
-                    approveGround(rowData.refGroundId, currentStatus)
+                    approveGround(
+                      rowData.refGroundId,
+                      rowData.approveGround as any
+                    )
                   }
                 >
-                  {buttonLabel}
-                </button>
+                  {label}
+                </Button>
               </div>
             );
           }}
           style={{ minWidth: "10rem" }}
         />
-
+ 
         <Column
           header="Delete"
           body={(rowData) => (
@@ -421,12 +454,11 @@ const Ground: React.FC = () => {
         visible={visibleRight}
         position="right"
         onHide={() => setVisibleRight(false)}
-        style={{ width: "60%" }}
+        style={{ width: "65%" }}
       >
+        <GroundView onSuccess={onSuccess} groundData={groundupdateID} />
         {/* <GroundSidebar onSuccess={handleEditSuccess} /> */}
       </Sidebar>
-
-   
 
       {/* <Sidebar
         visible={sidebarForEditData.visible}

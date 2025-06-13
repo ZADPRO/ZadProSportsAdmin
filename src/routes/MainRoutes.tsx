@@ -74,7 +74,7 @@ const MainRoutes: React.FC = () => {
                 </ProtectedRoute>
               }
             />
-            
+
             <Route
               path="/booking"
               element={

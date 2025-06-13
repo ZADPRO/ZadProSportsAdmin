@@ -1,24 +1,3 @@
-// interface Props {
-//   title: string;
-//   count: number;
-//   color?: string;
-// }
-
-// export default function DashboardCard({
-//   title,
-//   count,
-//   color = "bg-gray-500",
-// }: Props) {
-//   return (
-//     <div className={`rounded-xl shadow-lg p-6 text-white ${color}`}>
-//       <h3 className="text-lg font-medium">{title}</h3>
-//       {/* <p className="text-4xl font-bold mt-2">{count}</p> */}
-//       <p className="text-3xl font-bold mt-2">
-//         {!isNaN(count) ? count.toLocaleString() : "0"}
-//       </p>
-//     </div>
-//   );
-// }
 
 import React from "react";
 import { Card } from "primereact/card";
@@ -40,11 +19,11 @@ const DashboardStats: React.FC<DashboardProps> = ({
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
       <Card
         title="Bookings"
-        className="bg-blue-500  text-purple-600 shadow-lg rounded-lg"
+        className="bg-[#000]  shadow-lg rounded-lg"
         style={{ height: "160px", minWidth: "15rem" }}
       >
-        <div className="flex flex-col justify-center items-center h-full">
-          <p className="text-5xl font-bold m-0 leading-tight">
+        <div className="flex flex-col justify-center items-center h-full  text-purple-600">
+          <p className="text-5xl font-bold m-0 leading-tight  text-purple-600">
             {BookingCount.toLocaleString()}
           </p>
         </div>
@@ -64,7 +43,7 @@ const DashboardStats: React.FC<DashboardProps> = ({
 
       <Card
         title="Users"
-        className="bg-[#b03f98] text-[#b03f98] shadow-lg rounded-lg"
+        className="bg-[#a887a1] text-[#000] shadow-lg rounded-lg"
         style={{ minHeight: "160px", minWidth: "15rem" }}
       >
         <div className="flex flex-col justify-center items-center h-full text-[#b03f98">
@@ -76,7 +55,7 @@ const DashboardStats: React.FC<DashboardProps> = ({
 
       <Card
         title="Owners"
-        className="bg-[#c1d113]  text-[#b03f98] shadow-lg rounded-lg"
+        className="bg-[#7bbda3]  text-[#000] shadow-lg rounded-lg"
         style={{ minHeight: "160px", minWidth: "15rem" }}
       >
         <div className="flex flex-col justify-center items-center h-full">

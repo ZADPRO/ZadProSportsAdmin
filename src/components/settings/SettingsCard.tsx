@@ -57,7 +57,7 @@ const SettingsCard: React.FC = () => {
         </div>
         <div className="m-3 flex-1">
           <div className="card flex-1">
-            <Card title="Features" style={{ textAlign: "left" }}>
+            {/* <Card title="Features" style={{ textAlign: "left" }}>
               <div
                 style={{
                   display: "flex",
@@ -83,12 +83,12 @@ const SettingsCard: React.FC = () => {
                 </h2>
                 <Features />
               </Sidebar>{" "}
-            </Card>
+            </Card> */}
           </div>
         </div>
         <div className="m-3 flex-1">
           <div className="card flex-1 ">
-            <Card title="User Guidelines" style={{ textAlign: "left" }}>
+            {/* <Card title="User Guidelines" style={{ textAlign: "left" }}>
               <div
                 style={{
                   display: "flex",
@@ -114,12 +114,12 @@ const SettingsCard: React.FC = () => {
                 </h2>
                 <UserGuidelines />
               </Sidebar>{" "}
-            </Card>
+            </Card> */}
           </div>
         </div>
         <div className="m-3 flex-1">
           <div className="card flex-1 ">
-            <Card title="Facilities" style={{ textAlign: "left" }}>
+            {/* <Card title="Facilities" style={{ textAlign: "left" }}>
               <div
                 style={{
                   display: "flex",
@@ -145,14 +145,14 @@ const SettingsCard: React.FC = () => {
                 </h2>
                 <Facilities />
               </Sidebar>{" "}
-            </Card>
+            </Card> */}
           </div>
         </div>
       </div>
       <div className="secondrow m-3 flex">
         <div className="m-3 flex-1 ">
           <div className="card flex-1">
-            <Card title="Additional Tips" style={{ textAlign: "left" }}>
+            {/* <Card title="Additional Tips" style={{ textAlign: "left" }}>
               <div
                 style={{
                   display: "flex",
@@ -178,7 +178,7 @@ const SettingsCard: React.FC = () => {
                 </h2>
                 <AdditionalTips />
               </Sidebar>{" "}
-            </Card>
+            </Card> */}
           </div>
         </div>
         <div className="m-3 flex-1">
