@@ -1,6 +1,6 @@
 import axios from "axios";
 import { TabPanel, TabView } from "primereact/tabview";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState ,useRef} from "react";
 import decrypt from "../../common/helper";
 import { Trash2 } from "lucide-react";
 import { Column } from "primereact/column";
@@ -8,6 +8,7 @@ import { DataTable } from "primereact/datatable";
 import { saveAs } from "file-saver";
 import * as XLSX from "xlsx";
 import { Button } from "primereact/button";
+import { Toast } from "primereact/toast";
 
 interface groundAudit {
   refTransData: string;
@@ -16,11 +17,11 @@ interface groundAudit {
   updatedAt: string;
 }
 
-
 const Auditpage: React.FC = () => {
   const [groundAudit, setGroundAudit] = useState<groundAudit[]>([]);
   const [audit, setAudit] = useState<groundAudit[]>([]);
   const [listOwnerAudit, setListOwnerAuditApi] = useState<groundAudit[]>([]);
+  const toast = useRef<Toast>(null);
 
   const listGroundAuditApi = () => {
     axios
@@ -121,7 +122,14 @@ const Auditpage: React.FC = () => {
         localStorage.setItem("JWTtoken", data.token);
 
         if (data.success) {
-          // Refresh correct list based on type
+          toast.current?.show({
+            severity: "success",
+            summary: "Success",
+            detail: "Deleted successfully!",
+            life: 3000,
+          });
+          // Refresh correct list
+          //  based on type
           if (type === "ground") {
             listGroundAuditApi();
           } else if (type === "owner") {
@@ -157,8 +165,10 @@ const Auditpage: React.FC = () => {
 
   return (
     <div className="container m-3 gap-3">
+        <Toast ref={toast} />
       <h1 className="text-2xl font-bold mb-2">Audit Page</h1>
       <TabView>
+
         <TabPanel header="Ground Audit">
           <div className="flex justify-end gap-2 mb-2 mr-5">
             <Button

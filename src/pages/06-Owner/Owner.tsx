@@ -382,7 +382,7 @@ const Onwer: React.FC = () => {
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/ownerRoutes/deleteOwners`,
-        { refUserId: refuserId },
+        { refOwnerId: refuserId },
         {
           headers: {
             Authorization: "Bearer " + localStorage.getItem("JWTtoken"),
@@ -676,7 +676,6 @@ const Onwer: React.FC = () => {
         <Column
           field="refOwnerLname"
           header="Last Name"
-          
           style={{ minWidth: "10rem" }}
         ></Column>
         <Column
@@ -720,8 +719,8 @@ const Onwer: React.FC = () => {
                   className="bg-red-100 text-red-600 hover:bg-red-200 p-2 rounded-full cursor-pointer"
                   title="Delete"
                   onClick={() => {
-                    console.log("rowData.refuserId", rowData);
-                    deleteOwner(rowData.refuserId);
+                    console.log("rowData.refuserId", rowData.refOwnerId);
+                    deleteOwner(rowData.refOwnerId);
                   }}
                 >
                   <Trash2 size={18} color="#dc2626" />

@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Sidebar } from "primereact/sidebar";
 import axios from "axios";
 import decrypt from "../../common/helper";
 import { Trash2 } from "lucide-react";
+import { Toast } from "primereact/toast";
 
 interface GroundBooking {
   refUserBookingId: number;
@@ -39,7 +40,6 @@ interface GroundBooking {
     refPrice?: number;
   }[];
 }
-
 function getDatesInRange(fromDate: any, toDate: any) {
   const result = [];
   const currentDate = new Date(fromDate);
@@ -100,6 +100,8 @@ function getInclusiveDayCount(fromDateStr: any, toDateStr: any) {
 
 const Booking: React.FC = () => {
   const [visible, setVisible] = useState(false);
+  const toast = useRef<Toast>(null);
+
   const [selectedBooking, setSelectedBooking]: any =
     useState<GroundBooking | null>(null);
   const [selectedData, setSelectedData]: any = useState(null);
@@ -149,11 +151,17 @@ const Booking: React.FC = () => {
           response.data[0],
           import.meta.env.VITE_ENCRYPTION_KEY
         );
-        console.log('data', data)
+        console.log("data", data);
         localStorage.setItem("JWTtoken", data.token);
 
         if (data.success) {
           fetchBookingList();
+          toast.current?.show({
+            severity: "success",
+            summary: "Success",
+            detail: "Deleted successfully!",
+            life: 3000,
+          });
         }
       })
       .catch((error) => {
@@ -485,9 +493,7 @@ const Booking: React.FC = () => {
             <button
               className="bg-red-100 text-red-600 hover:bg-red-200 p-2 rounded-full justify-items-center"
               title="Delete"
-                   onClick={() =>
-                handleDeleteClick(rowData.refUserBookingId)
-              }
+              onClick={() => handleDeleteClick(rowData.refUserBookingId)}
             >
               <Trash2 size={18} color="#dc2626" />
             </button>

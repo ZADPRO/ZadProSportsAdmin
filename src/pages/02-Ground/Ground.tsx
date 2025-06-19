@@ -195,6 +195,8 @@ const Ground: React.FC = () => {
           import.meta.env.VITE_ENCRYPTION_KEY
         );
         localStorage.setItem("JWTtoken", data.token);
+        console.log("data---->", data);
+
         if (data.success) {
           console.log("Deleted Successfully");
           toast.current?.show({
@@ -207,9 +209,6 @@ const Ground: React.FC = () => {
         } else {
           console.error("Failed to delete item");
         }
-      })
-      .catch((error) => {
-        console.error("Error deleting item:", error);
       });
   };
 

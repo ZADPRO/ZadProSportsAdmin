@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import decrypt from "../../common/helper";
 import axios from "axios";
 import { DataTable } from "primereact/datatable";
@@ -10,6 +10,7 @@ import type { Nullable } from "primereact/ts-helpers";
 import { Button } from "primereact/button";
 import { saveAs } from "file-saver";
 import * as XLSX from "xlsx";
+import { Toast } from "primereact/toast";
 
 interface history {
   ownerReceivable: string;
@@ -38,6 +39,7 @@ interface payoutshistory {
 }
 
 const FinancePage: React.FC = () => {
+  const toast = useRef<Toast>(null);
   const [listBooking, setListBooking] = useState<history[]>([]);
   const [listPayouts, setListPayouts] = useState<payoutshistory[]>([]);
   const [weekStartDate, setWeekStartDate] = useState<Nullable<Date>>(null);
@@ -196,6 +198,12 @@ const FinancePage: React.FC = () => {
         localStorage.setItem("JWTtoken", data.token);
 
         if (data.success) {
+          toast.current?.show({
+            severity: "success",
+            summary: "Success",
+            detail: "Deleted successfully!",
+            life: 3000,
+          });
           listPayoutsApi();
         }
       })
@@ -225,6 +233,7 @@ const FinancePage: React.FC = () => {
   return (
     <div className="m-5">
       <h1 className="font-bold text-3xl text-black mt-4">Finance </h1>
+      <Toast ref={toast} />
       <TabView>
         {/* Bookings Tab */}
         <TabPanel header="Bookings">
