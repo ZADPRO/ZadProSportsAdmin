@@ -11,6 +11,7 @@ import { Button } from "primereact/button";
 import { saveAs } from "file-saver";
 import * as XLSX from "xlsx";
 import { Toast } from "primereact/toast";
+import { Dropdown } from "primereact/dropdown";
 
 interface history {
   ownerReceivable: string;
@@ -22,8 +23,8 @@ interface history {
   refOwnerCustId: string;
   refOwnerFname: string;
   refOwnerId: number;
-  totalCommission: string;
-  totalEarnings: string;
+  commission: string;
+  retTotalAmount: string;
 }
 
 interface payoutshistory {
@@ -38,12 +39,23 @@ interface payoutshistory {
   weekStartDate: string;
 }
 
+interface owners {
+  refOwnerCustId: string;
+  refOwnerFname: string;
+  refOwnerId: string;
+  label?: string;
+  value?: string;
+}
+
 const FinancePage: React.FC = () => {
   const toast = useRef<Toast>(null);
   const [listBooking, setListBooking] = useState<history[]>([]);
   const [listPayouts, setListPayouts] = useState<payoutshistory[]>([]);
   const [weekStartDate, setWeekStartDate] = useState<Nullable<Date>>(null);
   const [weekEndDate, setWeekEndDate] = useState<Nullable<Date>>(null);
+  const [listOwners, setListOwners] = useState<owners[]>([]);
+  const [selectedOwnerId, setSelectedOwnerId] = useState<string | null>(null);
+
   const [loading, setLoading] = useState(false);
   //   const bookingTableRef = useRef<DataTable<history[]>>(null);
   //   const payoutsTableRef = useRef<DataTable<payoutshistory[]>>(null);
@@ -72,6 +84,35 @@ const FinancePage: React.FC = () => {
       });
   };
 
+  const listownersApi = () => {
+    axios
+      .get(`${import.meta.env.VITE_API_URL}/financeRoutes/listOwners`, {
+        headers: {
+          Authorization: "Bearer " + localStorage.getItem("JWTtoken"),
+          "Content-Type": "application/json",
+        },
+      })
+      .then((response) => {
+        const data = decrypt(
+          response.data[1],
+          response.data[0],
+          import.meta.env.VITE_ENCRYPTION_KEY
+        );
+        localStorage.setItem("JWTtoken", data.token);
+        console.log("data", data);
+        if (data.success) {
+          const formattedOwners = data.result.map((owner: owners) => ({
+            ...owner,
+            label: `${owner.refOwnerFname} (${owner.refOwnerCustId})`,
+            value: owner.refOwnerId,
+          }));
+          setListOwners(formattedOwners);
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to  listOwners:", error);
+      });
+  };
   const listPayoutsApi = () => {
     axios
       .get(`${import.meta.env.VITE_API_URL}/financeRoutes/listPayoutes`, {
@@ -86,6 +127,7 @@ const FinancePage: React.FC = () => {
           response.data[0],
           import.meta.env.VITE_ENCRYPTION_KEY
         );
+        console.log("data", data);
         localStorage.setItem("JWTtoken", data.token);
         if (data.success) {
           setListPayouts(data.result);
@@ -96,19 +138,66 @@ const FinancePage: React.FC = () => {
       });
   };
 
+  // const recordBookingFinanceAPI = () => {
+  //   if (!weekStartDate || !weekEndDate) {
+  //     showToast("error", "false", "Please select both week start and end date");
+  //     return;
+  //   }
+
+  //   setLoading(true);
+  //   axios
+  //     .post(
+  //       `${import.meta.env.VITE_API_URL}/financeRoutes/findAmounts`,
+  //       {
+  //         weekStartDate: weekStartDate.toISOString(),
+  //         weekEndDate: weekEndDate.toISOString(),
+  //         refOwnerId: selectedOwnerId, // 👈 Include selected owner ID
+  //       },
+  //       {
+  //         headers: {
+  //           Authorization: "Bearer " + localStorage.getItem("JWTtoken"),
+  //           "Content-Type": "application/json",
+  //         },
+  //       }
+  //     )
+  //     .then((response) => {
+  //       const data = decrypt(
+  //         response.data[1],
+  //         response.data[0],
+  //         import.meta.env.VITE_ENCRYPTION_KEY
+  //       );
+
+  //       console.log("data----------->", data);
+  //       if (data.success) {
+  //         localStorage.setItem("JWTtoken", data.token);
+  //         setListPayouts(data.insertResults.rows || []);
+  //       } else {
+  //         showToast(
+  //           "error",
+  //           "false",
+  //           "The date is already selected or already paid"
+  //         );
+  //       }
+  //     })
+  //     .catch((error) => {
+  //       console.error("Failed to record payouts:", error);
+  //     });
+  // };
+
   const recordBookingFinanceAPI = () => {
     if (!weekStartDate || !weekEndDate) {
-      alert("Please select both week start and end date");
+      showToast("error", "false", "Please select both week start and end date");
       return;
     }
 
     setLoading(true);
     axios
       .post(
-        `${import.meta.env.VITE_API_URL}/financeRoutes/recordBookingFinance`,
+        `${import.meta.env.VITE_API_URL}/financeRoutes/findAmounts`,
         {
           weekStartDate: weekStartDate.toISOString(),
           weekEndDate: weekEndDate.toISOString(),
+          refOwnerId: selectedOwnerId,
         },
         {
           headers: {
@@ -123,26 +212,49 @@ const FinancePage: React.FC = () => {
           response.data[0],
           import.meta.env.VITE_ENCRYPTION_KEY
         );
-        localStorage.setItem("JWTtoken", data.token);
-        console.log("data", data);
+
+        console.log("data----------->", data);
+
         if (data.success) {
-          setListPayouts(data.insertResults.rows || []);
-        } else {
-          alert("Something went wrong.");
+          localStorage.setItem("JWTtoken", data.token);
+
+          // ✅ Just refresh the full payout list after insertion
+          listPayoutsApi();
+          showToast("success", "Success", "Finance recorded successfully");
+        } 
+        else {
+             showToast("error", "Failed", data.message || "Something went wrong");
+
         }
       })
       .catch((error) => {
         console.error("Failed to record payouts:", error);
-        alert("API call failed.");
-      })
-      .finally(() => setLoading(false));
+
+        let errorMessage = "Something went wrong";
+
+        try {
+          const decryptedError = decrypt(
+            error.response.data[1],
+            error.response.data[0],
+            import.meta.env.VITE_ENCRYPTION_KEY
+          );
+
+          if (decryptedError?.message) {
+            errorMessage = decryptedError.message;
+          }
+        } catch (e) {
+          console.error("Error decrypting error message:", e);
+        }
+
+        showToast("error", "Failed", errorMessage);
+      });
   };
 
   const handleMarkAsPaid = (payoutId: number) => {
     setLoading(true);
     axios
       .post(
-        `${import.meta.env.VITE_API_URL}/financeRoutes/getWeeklyPayouts`,
+        `${import.meta.env.VITE_API_URL}/financeRoutes/markAsPaid`,
         { payoutId },
         {
           headers: {
@@ -159,6 +271,12 @@ const FinancePage: React.FC = () => {
         );
         localStorage.setItem("JWTtoken", data.token);
         if (data.success) {
+          toast.current?.show({
+            severity: "success",
+            summary: "Success",
+            detail: "Amount Paid Successfully",
+            life: 3000,
+          });
           setListPayouts((prevList) =>
             prevList.map((item) =>
               item.payoutId === payoutId
@@ -166,13 +284,14 @@ const FinancePage: React.FC = () => {
                 : item
             )
           );
+          listPayoutsApi(); // ✅ re-fetch the latest data from backend
         } else {
-          alert("Failed to update payout.");
+          showToast("error", "false", "error");
         }
       })
       .catch((error) => {
         console.error("API call failed:", error);
-        alert("Something went wrong.");
+        showToast("error", "false", "error");
       })
       .finally(() => setLoading(false));
   };
@@ -215,7 +334,21 @@ const FinancePage: React.FC = () => {
   useEffect(() => {
     listBookingsApi();
     listPayoutsApi();
+    listownersApi();
   }, []);
+
+  const showToast = (
+    severity: "success" | "info" | "warn" | "error",
+    summary: string,
+    detail: string
+  ) => {
+    toast.current?.show({
+      severity,
+      summary,
+      detail,
+      life: 3000,
+    });
+  };
 
   const exportExcel = (data: object[], fileName: string) => {
     const worksheet = XLSX.utils.json_to_sheet(data);
@@ -247,7 +380,7 @@ const FinancePage: React.FC = () => {
             />
           </div>
 
-          <div className="m-3">
+          <div className="m-3 align-items-centre">
             <DataTable
               scrollable
               showGridlines
@@ -259,38 +392,52 @@ const FinancePage: React.FC = () => {
               <Column
                 field="sno"
                 header="S.No"
+                headerStyle={{ textAlign: "center" }}
                 body={(_, { rowIndex }) => rowIndex + 1}
                 style={{ minWidth: "5rem" }}
+                className="text-center"
               />
               <Column
                 field="refOwnerCustId"
                 header="Owner CustId"
+                headerStyle={{ textAlign: "center" }}
                 style={{ minWidth: "10rem", textAlign: "center" }}
+                className="text-center"
               />
               <Column
                 field="refOwnerFname"
                 header="Owner Name"
+                headerStyle={{ textAlign: "center" }}
                 style={{ minWidth: "12rem" }}
+                className="text-center"
               />
               <Column
                 field="refGroundName"
                 header="Ground Name"
+                headerStyle={{ textAlign: "center" }}
                 style={{ minWidth: "12rem" }}
+                className="text-center"
               />
               <Column
-                field="totalEarnings"
+                field="retTotalAmount"
                 header="Total Earnings"
+                headerStyle={{ textAlign: "center" }}
                 style={{ minWidth: "12rem" }}
+                className="text-center"
               />
               <Column
-                field="totalCommission"
+                field="commission"
                 header="Total Commission"
+                headerStyle={{ textAlign: "center" }}
                 style={{ minWidth: "12rem" }}
+                className="text-center"
               />
               <Column
                 field="ownerReceivable"
                 header="Receivable Amount"
+                headerStyle={{ textAlign: "center" }}
                 style={{ minWidth: "12rem" }}
+                className="text-center"
               />
               {/* <Column
                 header="Delete"
@@ -319,18 +466,35 @@ const FinancePage: React.FC = () => {
                 <label className="font-semibold mb-1">Week Start Date</label>
                 <Calendar
                   value={weekStartDate}
+                  placeholder="Week Start Date"
                   onChange={(e) => setWeekStartDate(e.value)}
                   showIcon
                   dateFormat="dd-mm-yy"
+                  maxDate={new Date()} // 👈 Disables future dates
                 />
               </div>
               <div className="flex flex-col">
                 <label className="font-semibold mb-1">Week End Date</label>
                 <Calendar
                   value={weekEndDate}
+                  placeholder="Week End Date"
                   onChange={(e) => setWeekEndDate(e.value)}
                   showIcon
                   dateFormat="dd-mm-yy"
+                  maxDate={new Date()} // 👈 Disables future dates
+                />
+              </div>
+              <div className="flex flex-col">
+                <label className="font-semibold mb-1">Owner</label>
+
+                <Dropdown
+                  value={selectedOwnerId}
+                  options={listOwners}
+                  onChange={(e) => setSelectedOwnerId(e.value)}
+                  placeholder="Select Owner"
+                  optionLabel="refOwnerFname"
+                  optionValue="refOwnerId" // Send this to API
+                  className="w-full"
                 />
               </div>
 
@@ -362,32 +526,38 @@ const FinancePage: React.FC = () => {
               <Column
                 field="sno"
                 header="S.No"
+                headerStyle={{ textAlign: "center" }}
                 body={(_, { rowIndex }) => rowIndex + 1}
-                style={{ minWidth: "5rem" }}
+                style={{ minWidth: "5rem", textAlign: "center" }}
               />
               <Column
                 field="refOwnerFname"
                 header="Owner Name"
+                headerStyle={{ textAlign: "center" }}
                 style={{ minWidth: "12rem", textAlign: "center" }}
               />
               <Column
                 field="totalEarnings"
                 header="Total Earnings"
-                style={{ minWidth: "14rem" }}
+                headerStyle={{ textAlign: "center" }}
+                style={{ minWidth: "14rem", textAlign: "center" }}
               />
               <Column
                 field="totalCommission"
                 header="Total Commission"
-                style={{ minWidth: "14rem" }}
+                headerStyle={{ textAlign: "center" }}
+                style={{ minWidth: "14rem", textAlign: "center" }}
               />
               <Column
                 field="ownerReceivable"
                 header="Receivable Amount"
-                style={{ minWidth: "14rem" }}
+                headerStyle={{ textAlign: "center" }}
+                style={{ minWidth: "14rem", textAlign: "center" }}
               />
               <Column
                 field="weekStartDate"
                 header="Week Start Date"
+                headerStyle={{ textAlign: "center" }}
                 body={(rowData) => {
                   const date = new Date(rowData.weekStartDate);
                   return (
@@ -403,6 +573,7 @@ const FinancePage: React.FC = () => {
               <Column
                 field="weekEndDate"
                 header="Week End Date"
+                headerStyle={{ textAlign: "center" }}
                 body={(rowData) => {
                   const date = new Date(rowData.weekEndDate);
                   return (
@@ -442,6 +613,7 @@ const FinancePage: React.FC = () => {
               <Column
                 field="payoutStatus"
                 header="Payout Status"
+                headerStyle={{ textAlign: "center" }}
                 body={(rowData) => {
                   const isPaid = rowData.payoutStatus === "paid";
                   const buttonStyle: React.CSSProperties = {
@@ -476,6 +648,7 @@ const FinancePage: React.FC = () => {
               <Column
                 field="payoutDate"
                 header="Payout Date"
+                headerStyle={{ textAlign: "center" }}
                 body={(rowData) => {
                   if (!rowData.payoutDate) {
                     return (
@@ -497,11 +670,11 @@ const FinancePage: React.FC = () => {
                   return <span>{formattedDate}</span>;
                 }}
                 style={{ minWidth: "14rem", textAlign: "center" }}
-                headerStyle={{ textAlign: "center" }}
               />
 
               <Column
                 header="Delete"
+                headerStyle={{ textAlign: "center" }}
                 body={(rowData) => (
                   <button
                     className="bg-red-100 text-red-600 hover:bg-red-200 p-2 rounded-full"
@@ -511,7 +684,7 @@ const FinancePage: React.FC = () => {
                     <Trash2 size={18} color="#dc2626" />
                   </button>
                 )}
-                style={{ minWidth: "8rem" }}
+                style={{ minWidth: "8rem", textAlign: "center" }}
               />
             </DataTable>
           </div>
