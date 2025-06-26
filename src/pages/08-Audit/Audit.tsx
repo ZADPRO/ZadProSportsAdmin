@@ -14,6 +14,7 @@ interface groundAudit {
   refTransData: string;
   refTransactionType: string;
   refUserFname: string;
+  refOwnerFname: string;
   updatedAt: string;
 }
 
@@ -205,7 +206,7 @@ const Auditpage: React.FC = () => {
             />
 
             <Column
-              field="refUserFname"
+              field="refOwnerFname"
               header="Updated By"
               style={{ minWidth: "12rem" }}
             />
@@ -267,7 +268,7 @@ const Auditpage: React.FC = () => {
             />
 
             <Column
-              field="refUserFname"
+              field="refOwnerFname"
               header="Updated By"
               style={{ minWidth: "12rem" }}
             />
